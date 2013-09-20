@@ -2279,6 +2279,7 @@ requestAssociationTCP(PRIVATE_NETWORKKEY ** network,
 
         rc = select(s+1, NULL, &fdSet, NULL, &timeout);
 #ifdef HAVE_WINSOCK_H
+		// save errno for later
 		int errnum = WSAGetLastError();
 #endif
 
@@ -2303,6 +2304,7 @@ requestAssociationTCP(PRIVATE_NETWORKKEY ** network,
             (*association)->connection = NULL;
 
 #ifdef HAVE_WINSOCK_H
+			// restore errno from "select" above
 			WSASetLastError(errnum);
 #endif
             char buf[256];
@@ -2367,6 +2369,7 @@ requestAssociationTCP(PRIVATE_NETWORKKEY ** network,
     if (rc < 0)
     {
 #if HAVE_WINSOCK_H
+		// save errno for later
 		int errnum = WSAGetLastError();
 #endif
 
@@ -2383,6 +2386,7 @@ requestAssociationTCP(PRIVATE_NETWORKKEY ** network,
         (*association)->connection = NULL;
 		
 #ifdef HAVE_WINSOCK_H
+		// restore errno from above "connect"
 		WSASetLastError(errnum);
 #endif
 
@@ -2414,7 +2418,7 @@ requestAssociationTCP(PRIVATE_NETWORKKEY ** network,
 
           char buf[256];
           OFString msg = "TCP Initialization Error: ";
-          msg += FormatSocketError(GetLastSocketError(), buf, sizeof(buf));
+          msg += FormatSocketError(GetLastSocketError(), buf, sizeof(buf)); // ???
           return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
         }
         sockarg.l_onoff = 0;

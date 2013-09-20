@@ -1654,7 +1654,7 @@ receiveTransportConnectionTCP(PRIVATE_NETWORKKEY ** network,
 
             char buf[256];
             OFString msg = "Multi-Process Error: ";
-            msg += FormatSocketError(GetLastSocketError(), buf, sizeof(buf));
+            msg += OFStandard::strerror(errno, buf, sizeof(buf));
             msg += ", fork failed";
             return makeDcmnetCondition(DULC_CANNOTFORK, OF_error, msg.c_str());
         }
@@ -1955,7 +1955,7 @@ receiveTransportConnectionTCP(PRIVATE_NETWORKKEY ** network,
 #endif
       char buf[256];
       OFString msg = "TCP Initialization Error: ";
-      msg += FormatSocketError(GetLastSocketError(), buf, sizeof(buf));
+      msg += FormatSocketError(GetLastSocketError(), buf, sizeof(buf)); // where is corresponding socket call?
       return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
     }
 
