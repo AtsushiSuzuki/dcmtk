@@ -115,6 +115,9 @@ OFCondition
 PRV_NextPDUType(PRIVATE_ASSOCIATIONKEY ** association,
 		DUL_BLOCKOPTIONS block, int timeout, unsigned char *type);
 
+int GetLastSocketError();
+const char* FormatSocketError(int errnum, char* buf, size_t len);
+
 #endif
 
 /*
