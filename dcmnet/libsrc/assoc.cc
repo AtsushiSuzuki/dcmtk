@@ -1767,7 +1767,13 @@ ASC_receiveAssociation(T_ASC_Network * network,
       DUL_returnAssociatePDUStorage((*assoc)->DULassociation, *associatePDU, *associatePDUlength);
     }
 
-    if (cond.bad()) return cond;
+    if (cond.bad())
+	{
+		ASC_destroyAssociationParameters(&params);
+		free(*assoc);
+		*assoc = NULL;
+		return cond;
+	}
 
     /* mark the presentation contexts as being proposed */
     l = &params->DULparams.requestedPresentationContext;
