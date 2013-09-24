@@ -40,6 +40,7 @@
 #include "dcmtk/ofstd/ofstdinc.h"
 
 #ifdef WITH_LIBXML
+#include <wchar.h>
 #include <libxml/parser.h>
 #endif
 

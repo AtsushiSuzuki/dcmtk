@@ -144,7 +144,7 @@ IF(DCMTK_OVERWRITE_WIN32_COMPILER_FLAGS)
   IF(CMAKE_CXX_COMPILER MATCHES "CL|cl")
     IF(NOT WITH_SHARED_LIBS)
       IF(CMAKE_GENERATOR STREQUAL "Visual Studio 6")
-        SET(CMAKE_CXX_FLAGS "/nologo /W3 /GX /Gy /YX /Zm500") # /Zm500 increments heap size which is needed on some system to compile templates in dcmimgle
+        SET(CMAKE_CXX_FLAGS "/nologo /W3 /GX /Gy /YX /Zm500 /TP") # /Zm500 increments heap size which is needed on some system to compile templates in dcmimgle
         SET(CMAKE_CXX_FLAGS_DEBUG "/MDd /Z7 /Od")
         SET(CMAKE_CXX_FLAGS_RELEASE "/MD /O2")
         SET(CMAKE_CXX_FLAGS_MINSIZEREL "/MD /O2")
