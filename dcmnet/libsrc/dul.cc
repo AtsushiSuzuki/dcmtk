@@ -1563,7 +1563,7 @@ receiveTransportConnectionTCP(PRIVATE_NETWORKKEY ** network,
       {
           char buf[256];
           OFOStringStream stream;
-          stream << "TCP Initialization Error: " << OFStandard::strerror(errno, buf, sizeof(buf))
+		  stream << "TCP Initialization Error: " << FormatSocketError(GetLastSocketError(), buf, sizeof(buf))
                  << ", getpeername failed on socket " << sock << OFStringStream_ends;
           OFSTRINGSTREAM_GETOFSTRING(stream, msg)
           return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
@@ -1630,13 +1630,17 @@ receiveTransportConnectionTCP(PRIVATE_NETWORKKEY ** network,
         do
         {
             sock = accept((*network)->networkSpecific.TCP.listenSocket, &from, &len);
+#ifdef HAVE_WINSOCK_H
+		} while (sock == -1 && WSAGetLastError() == WSAEINTR);
+#else
         } while (sock == -1 && errno == EINTR);
+#endif
 
         if (sock < 0)
         {
             char buf[256];
             OFOStringStream stream;
-            stream << "TCP Initialization Error: " << OFStandard::strerror(errno, buf, sizeof(buf))
+            stream << "TCP Initialization Error: " << FormatSocketError(GetLastSocketError(), buf, sizeof(buf))
                    << ", accept failed on socket " << sock << OFStringStream_ends;
             OFSTRINGSTREAM_GETOFSTRING(stream, msg)
             return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
@@ -1819,7 +1823,7 @@ receiveTransportConnectionTCP(PRIVATE_NETWORKKEY ** network,
     {
         char buf[256];
         OFOStringStream stream;
-        stream << "TCP Initialization Error: " << OFStandard::strerror(errno, buf, sizeof(buf))
+        stream << "TCP Initialization Error: " << FormatSocketError(GetLastSocketError(), buf, sizeof(buf))
                << ", setsockopt failed on socket " << sock << OFStringStream_ends;
         OFSTRINGSTREAM_GETOFSTRING(stream, msg)
         return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
@@ -1829,7 +1833,7 @@ receiveTransportConnectionTCP(PRIVATE_NETWORKKEY ** network,
     {
         char buf[256];
         OFString msg = "TCP Initialization Error: ";
-        msg += OFStandard::strerror(errno, buf, sizeof(buf));
+        msg += FormatSocketError(GetLastSocketError(), buf, sizeof(buf));
         return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
     }
 #endif
@@ -1855,7 +1859,7 @@ receiveTransportConnectionTCP(PRIVATE_NETWORKKEY ** network,
         {
             char buf[256];
             OFString msg = "TCP Initialization Error: ";
-            msg += OFStandard::strerror(errno, buf, sizeof(buf));
+            msg += FormatSocketError(GetLastSocketError(), buf, sizeof(buf));
             return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
         }
     }
@@ -1945,7 +1949,7 @@ receiveTransportConnectionTCP(PRIVATE_NETWORKKEY ** network,
 #endif
       char buf[256];
       OFString msg = "TCP Initialization Error: ";
-      msg += OFStandard::strerror(errno, buf, sizeof(buf));
+      msg += FormatSocketError(GetLastSocketError(), buf, sizeof(buf)); // where is corresponding socket call?
       return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
     }
 
@@ -2080,7 +2084,7 @@ initializeNetworkTCP(PRIVATE_NETWORKKEY ** key, void *parameter)
       {
         char buf[256];
         OFString msg = "TCP Initialization Error: ";
-        msg += OFStandard::strerror(errno, buf, sizeof(buf));
+        msg += FormatSocketError(GetLastSocketError(), buf, sizeof(buf));
         return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
       }
       reuse = 1;
@@ -2091,7 +2095,7 @@ initializeNetworkTCP(PRIVATE_NETWORKKEY ** key, void *parameter)
       {
         char buf[256];
         OFString msg = "TCP Initialization Error: ";
-        msg += OFStandard::strerror(errno, buf, sizeof(buf));
+        msg += FormatSocketError(GetLastSocketError(), buf, sizeof(buf));
           return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
       }
 #endif
@@ -2103,7 +2107,7 @@ initializeNetworkTCP(PRIVATE_NETWORKKEY ** key, void *parameter)
       {
         char buf[256];
         OFString msg = "TCP Initialization Error: ";
-        msg += OFStandard::strerror(errno, buf, sizeof(buf));
+        msg += FormatSocketError(GetLastSocketError(), buf, sizeof(buf));
         return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
       }
       /* Find out assigned port number and print it out */
@@ -2112,7 +2116,7 @@ initializeNetworkTCP(PRIVATE_NETWORKKEY ** key, void *parameter)
       {
         char buf[256];
         OFString msg = "TCP Initialization Error: ";
-        msg += OFStandard::strerror(errno, buf, sizeof(buf));
+        msg += FormatSocketError(GetLastSocketError(), buf, sizeof(buf));
         return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
       }
 #ifdef HAVE_GUSI_H
@@ -2123,7 +2127,7 @@ initializeNetworkTCP(PRIVATE_NETWORKKEY ** key, void *parameter)
       {
         char buf[256];
         OFString msg = "TCP Initialization Error: ";
-        msg += OFStandard::strerror(errno, buf, sizeof(buf));
+        msg += FormatSocketError(GetLastSocketError(), buf, sizeof(buf));
         return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
       }
 #endif
@@ -2728,4 +2732,31 @@ void dumpExtNegList(SOPClassExtendedNegotiationSubItemList& lst)
 {
     OFString str;
     COUT << dumpExtNegList(str, lst) << OFendl;
+}
+
+
+int GetLastSocketError()
+{
+#ifdef _WIN32
+	return WSAGetLastError();
+#else
+	return errno;
+#endif
+}
+
+const char* FormatSocketError(int errnum, char* buf, size_t len)
+{
+#ifdef _WIN32
+	FormatMessage(
+		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		errnum,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		buf,
+		len,
+		NULL);
+	return buf;
+#else
+	return FormatSocketError(GetLastSocketError(), buf, sizeof(buf));
+#endif
 }
