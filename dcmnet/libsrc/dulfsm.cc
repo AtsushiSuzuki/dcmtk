@@ -610,7 +610,8 @@ static FSM_ENTRY StateTable[DUL_NUMBER_OF_EVENTS][DUL_NUMBER_OF_STATES] = {
         {ARTIM_TIMER_EXPIRED, STATE2, AA_2T, STATE1, "", "", NULL},
         {ARTIM_TIMER_EXPIRED, STATE3, NOACTION, NOSTATE, "", "", NULL},
         {ARTIM_TIMER_EXPIRED, STATE4, NOACTION, NOSTATE, "", "", NULL},
-        {ARTIM_TIMER_EXPIRED, STATE5, NOACTION, NOSTATE, "", "", NULL},
+		// A-ASSOCIATE-AC/RJ timeout action
+        {ARTIM_TIMER_EXPIRED, STATE5, AA_2T, STATE13, "", "", NULL},
         {ARTIM_TIMER_EXPIRED, STATE6, NOACTION, NOSTATE, "", "", NULL},
 /* This next line is not per the standard.  We added a timeout action
 ** in this state.
