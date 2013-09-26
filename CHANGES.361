@@ -1,6 +1,75 @@
 
 Changes between releases are documented here.
 
+**** Changes from 2013.09.25 (riesmeier)
+
+- Fixed typos.
+  Affects: dcmdata/apps/img2dcm.cc
+
+- Added missing references to closed DCMTK features.
+  Affects: CHANGES.361
+
+**** Changes from 2013.09.24 (onken)
+
+- Create DcmFileFormat from DcmDataset w/o copying:
+  Added possibility to create DcmFileFormat from existing dataset and let
+  DcmFileFormat take ownership for that dataset instead of always performing a
+  deep copy. Closes DCMTK Feature #544.
+  Affects: dcmdata/include/dcmtk/dcmdata/dcfilefo.h
+           dcmdata/libsrc/dcfilefo.cc
+
+- Do not copy DcmDataset during C-GET receive:
+  C-GET functionality does not copy the dataset any more in the standard
+  storage handler.
+  Affects:  dcmnet/include/dcmtk/dcmnet/scu.h
+            dcmnet/libsrc/scu.cc
+
+**** Changes from 2013.09.23 (riesmeier)
+
+- Added new option for printing invalid codes:
+  Added new command line option that allows for printing also invalid codes.
+  Affects: dcmsr/apps/dsrdump.cc
+           dcmsr/docs/dsrdump.man
+
+- Added new print flag for showing invalid codes:
+  Added new print flag value that allows for showing also invalid codes. This
+  is especially useful for debugging purposes. Closes DCMTK Feature #548.
+  Affects: dcmsr/include/dcmtk/dcmsr/dsrtypes.h
+           dcmsr/libsrc/dsrcodtn.cc
+           dcmsr/libsrc/dsrdoc.cc
+           dcmsr/libsrc/dsrdoctn.cc
+           dcmsr/libsrc/dsrnumvl.cc
+           dcmsr/libsrc/dsrtypes.cc
+
+- Slightly changed output of print() method:
+  Invalid codes are now printed if the "printInvalid" parameter is true. By
+  default, the text "invalid code" is printed in such cases. Before this
+  modification, invalid codes were never printed and the behavior of the
+  "printInvalid" parameter was different. Closes DCMTK Feature #548.
+  Affects: dcmsr/include/dcmtk/dcmsr/dsrcodvl.h
+           dcmsr/libsrc/dsrcodvl.cc
+
+**** Changes from 2013.09.20 (riesmeier)
+
+- Fixed issue with CP-246 files and private tags:
+  According to CP-246, elements with VR=UN and undefined length should be
+  interpreted as a sequence with implicit VR. This fix makes sure that the
+  code also works with private tags. It also corrects a wrong log message.
+  Thanks to Mathieu Malaterre <malat@debian.org> for the original report.
+  Affects: dcmdata/libsrc/dcitem.cc
+
+- Minor fixes, e.g. added Doxygen markup.
+  Affects: dcmqrdb/docs/dcmqrdb.man
+
+**** Changes from 2013.09.20 (onken)
+
+- Warning to re-create index.dat after 20130705:
+  The format of dcmqrdb's binary index.dat file changed on 20130705 due to a
+  bug fix in the corresponding code. An index.dat file created before that date
+  will not work with dcmqrdb code compiled after that date but must be
+  re-created.
+  Affects: dcmqrdb/docs/dcmqrdb.man
+
 **** Changes from 2013.09.11 (riesmeier)
 
 - Fixed wrong Doxygen reference to a method:
