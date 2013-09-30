@@ -1829,6 +1829,7 @@ receiveTransportConnectionTCP(PRIVATE_NETWORKKEY ** network,
         return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
     }
     reuse = 1;
+#ifndef _WIN32
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof(reuse)) < 0)
     {
         char buf[256];
@@ -1836,6 +1837,7 @@ receiveTransportConnectionTCP(PRIVATE_NETWORKKEY ** network,
         msg += FormatSocketError(GetLastSocketError(), buf, sizeof(buf));
         return makeDcmnetCondition(DULC_TCPINITERROR, OF_error, msg.c_str());
     }
+#endif
 #endif
     setTCPBufferLength(sock);
 
@@ -2090,7 +2092,7 @@ initializeNetworkTCP(PRIVATE_NETWORKKEY ** key, void *parameter)
       reuse = 1;
 #ifdef HAVE_GUSI_H
       /* GUSI always returns an error for setsockopt(...) */
-#else
+#elif !defined(_WIN32)
       if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof(reuse)) < 0)
       {
         char buf[256];
