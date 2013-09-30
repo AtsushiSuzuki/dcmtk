@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 1994-2012, OFFIS e.V.
+ *  Copyright (C) 1994-2013, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -532,6 +532,11 @@ insertIntoSet(DcmStack &stack, const E_TransferSyntax xfer, const DcmTagKey &tag
                 << dcmvr.getVRName() << "' found, correct is '"
                 << tag.getVR().getVRName() << "'");
         }
+        else if ((tagvr == EVR_UNKNOWN) && (vr == EVR_UNKNOWN))
+        {
+            OFLOG_WARN(dump2dcmLogger, "VR of Tag " << tag << " is unknown, "
+                << "using 'UN' for this data element");
+        }
 
         if (vr != EVR_UNKNOWN)
             tag.setVR(dcmvr);
@@ -568,7 +573,7 @@ insertIntoSet(DcmStack &stack, const E_TransferSyntax xfer, const DcmTagKey &tag
                          * Allow a value beginning with a '=' character to represent
                          * a file containing data to be used as the attribute value.
                          * A '=' character is not a normal value since OB and OW values
-                         * must be written as multivalued hexidecimal (e.g. "00\ff\0d\8f");
+                         * must be written as multivalued hexadecimal (e.g. "00\ff\0d\8f");
                          */
                         l_error = putFileContentsIntoElement(newElement, value + 1);
                     } else {
@@ -676,8 +681,8 @@ insertIntoSet(DcmStack &stack, const E_TransferSyntax xfer, const DcmTagKey &tag
 
 static OFBool
 readDumpFile(DcmMetaInfo *metaheader, DcmDataset *dataset,
-         FILE *infile, const char *ifname, E_TransferSyntax &xfer,
-         const OFBool stopOnErrors, const unsigned long maxLineLength)
+             FILE *infile, const char *ifname, E_TransferSyntax &xfer,
+             const OFBool stopOnErrors, const unsigned long maxLineLength)
 {
     char *lineBuf = new char[maxLineLength];
     int lineNumber = 0;
@@ -699,6 +704,8 @@ readDumpFile(DcmMetaInfo *metaheader, DcmDataset *dataset,
     while (getLine(lineBuf, OFstatic_cast(int, maxLineLength), infile, lineNumber + 1))
     {
         lineNumber++;
+
+        OFLOG_TRACE(dump2dcmLogger, "processing line " << lineNumber << " of the input file");
 
         // ignore empty lines and comment lines
         if (onlyWhitespace(lineBuf))

@@ -1,6 +1,42 @@
 
 Changes between releases are documented here.
 
+**** Changes from 2013.09.28 (riesmeier)
+
+- Output currently processed line of input file:
+  Output the number of the currently processed text line of the input file to
+  the trace logger. This might be useful for debugging purposes.
+  Affects: dcmdata/apps/dump2dcm.cc
+
+- Output a warning message if the VR is unknown:
+  Output a warning message if the VR of a Tag in the dump file is unknown. This
+  could happen if the VR is neither specified in the dump file nor it can be
+  determined from the data dictionary. In such cases, the VR "UN" us used.
+  Affects: dcmdata/apps/dump2dcm.cc
+
+**** Changes from 2013.09.27 (riesmeier)
+
+- Fixed typo copied from Supplement 163:
+  Fixed typo copied from the cover page of the Supplement 163 document.
+  Affects: dcmdata/docs/dcm2xml.man
+
+**** Changes from 2013.09.26 (riesmeier)
+
+- Clarified use of writeXML() flags:
+  Made more clear which writeXML() flags can be used for which output format.
+  Affects: dcmdata/include/dcmtk/dcmdata/dctypes.h
+
+- Added support for <InlineBinary> XML element:
+  Added preliminary support for the <InlineBinary> XML element, which has been
+  introduced to the Native DICOM Model with Supplement 163 (Store Over the Web
+  by Representational State Transfer Services). Currently, data elements with a
+  VR of OB, OW and UN can be encoded as base64, i.e. OD and OF are still
+  missing. Partially closes DCMTK Feature #549.
+  Affects: dcmdata/apps/dcm2xml.cc
+           dcmdata/docs/dcm2xml.man
+           dcmdata/libsrc/dcpixseq.cc
+           dcmdata/libsrc/dcvrobow.cc
+
 **** Changes from 2013.09.25 (riesmeier)
 
 - Fixed typos.
