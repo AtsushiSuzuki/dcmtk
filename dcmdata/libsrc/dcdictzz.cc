@@ -4,7 +4,7 @@
 **
 **   User: joergr
 **   Host: thinkpad
-**   Date: 2013-08-20 14:55:39
+**   Date: 2013-10-23 15:00:41
 **   Prog: /home/joergr/Source/dcmtk-full/public/dcmdata/libsrc/mkdictbi
 **
 **   From: ../data/dicom.dic
@@ -15,7 +15,7 @@
 #include "dcmtk/dcmdata/dcdict.h"
 #include "dcmtk/dcmdata/dcdicent.h"
 
-const char* dcmBuiltinDictBuildDate = "2013-08-20 14:55:39";
+const char* dcmBuiltinDictBuildDate = "2013-10-23 15:00:41";
 
 struct DBI_SimpleEntry {
     Uint16 group;
@@ -18849,6 +18849,126 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       EVR_FD, "CylinderPower", 1, 1, "DICOM_2011",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
+  , { 0x0046, 0x0201, 0x0046, 0x0201,
+      EVR_CS, "CornealTopographySurface", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0202, 0x0046, 0x0202,
+      EVR_FL, "CornealVertexLocation", 2, 2, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0203, 0x0046, 0x0203,
+      EVR_FL, "PupilCentroidXCoordinate", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0204, 0x0046, 0x0204,
+      EVR_FL, "PupilCentroidYCoordinate", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0205, 0x0046, 0x0205,
+      EVR_FL, "EquivalentPupilRadius", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0207, 0x0046, 0x0207,
+      EVR_SQ, "CornealTopographyMapTypeCodeSequence", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0208, 0x0046, 0x0208,
+      EVR_IS, "VerticesOfTheOutlineOfPupil", 2, -1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0210, 0x0046, 0x0210,
+      EVR_SQ, "CornealTopographyMappingNormalsSequence", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0211, 0x0046, 0x0211,
+      EVR_SQ, "MaximumCornealCurvatureSequence", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0212, 0x0046, 0x0212,
+      EVR_FL, "MaximumCornealCurvature", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0213, 0x0046, 0x0213,
+      EVR_FL, "MaximumCornealCurvatureLocation", 2, 2, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0215, 0x0046, 0x0215,
+      EVR_SQ, "MinimumKeratometricSequence", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0218, 0x0046, 0x0218,
+      EVR_SQ, "SimulatedKeratometricCylinderSequence", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0220, 0x0046, 0x0220,
+      EVR_FL, "AverageCornealPower", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0224, 0x0046, 0x0224,
+      EVR_FL, "CornealISValue", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0227, 0x0046, 0x0227,
+      EVR_FL, "AnalyzedArea", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0230, 0x0046, 0x0230,
+      EVR_FL, "SurfaceRegularityIndex", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0232, 0x0046, 0x0232,
+      EVR_FL, "SurfaceAsymmetryIndex", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0234, 0x0046, 0x0234,
+      EVR_FL, "CornealEccentricityIndex", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0236, 0x0046, 0x0236,
+      EVR_FL, "KeratoconusPredictionIndex", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0238, 0x0046, 0x0238,
+      EVR_FL, "DecimalPotentialVisualAcuity", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0242, 0x0046, 0x0242,
+      EVR_CS, "CornealTopographyMapQualityEvaluation", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0244, 0x0046, 0x0244,
+      EVR_SQ, "SourceImageCornealProcessedDataSequence", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0247, 0x0046, 0x0247,
+      EVR_FL, "CornealPointLocation", 3, 3, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0248, 0x0046, 0x0248,
+      EVR_CS, "CornealPointEstimated", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0249, 0x0046, 0x0249,
+      EVR_FL, "AxialPower", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0250, 0x0046, 0x0250,
+      EVR_FL, "TangentialPower", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0251, 0x0046, 0x0251,
+      EVR_FL, "RefractivePower", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0252, 0x0046, 0x0252,
+      EVR_FL, "RelativeElevation", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0046, 0x0253, 0x0046, 0x0253,
+      EVR_FL, "CornealWavefront", 1, 1, "Supplement_168",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
 #ifdef WITH_PRIVATE_TAGS
   , { 0x0047, 0x0001, 0x0047, 0x0001,
       EVR_SQ, "ReconstructionParametersSequence", 1, 1, "PrivateTag",
@@ -19773,6 +19893,10 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       NULL }
   , { 0x0062, 0x0011, 0x0062, 0x0011,
       EVR_SQ, "SegmentedPropertyTypeModifierCodeSequence", 1, 1, "CP_1258",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0062, 0x0012, 0x0062, 0x0012,
+      EVR_SQ, "UsedSegmentsSequence", 1, 1, "CP_1268",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
   , { 0x0064, 0x0002, 0x0064, 0x0002,

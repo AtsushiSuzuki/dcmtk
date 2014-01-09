@@ -9,10 +9,13 @@ SET(DICOMDIC   "${dcmdata_SOURCE_DIR}/data/dicom.dic")
 SET(PRIVATEDIC "${dcmdata_SOURCE_DIR}/data/private.dic")
 SET(DICTIONARIES "${DICOMDIC}" "${PRIVATEDIC}")
 
-ADD_EXECUTABLE(mkdictbi EXCLUDE_FROM_ALL mkdictbi dctagkey dcdicent dcdict dcdictbi dcvr dchashdi cmdlnarg dctypes)
-ADD_EXECUTABLE(mkdeftag EXCLUDE_FROM_ALL mkdeftag dctagkey dcdicent dcdict dcdictbi dcvr dchashdi cmdlnarg dctypes)
-TARGET_LINK_LIBRARIES(mkdictbi ofstd oflog)
-TARGET_LINK_LIBRARIES(mkdeftag ofstd oflog)
+IF(BUILD_APPS)
+  # don't use DCMTK_ADD_EXECUTABLE() since we don't want to install the files
+  ADD_EXECUTABLE(mkdictbi EXCLUDE_FROM_ALL mkdictbi dctagkey dcdicent dcdict dcdictbi dcvr dchashdi cmdlnarg dctypes)
+  ADD_EXECUTABLE(mkdeftag EXCLUDE_FROM_ALL mkdeftag dctagkey dcdicent dcdict dcdictbi dcvr dchashdi cmdlnarg dctypes)
+ENDIF(BUILD_APPS)
+DCMTK_TARGET_LINK_MODULES(mkdictbi ofstd oflog)
+DCMTK_TARGET_LINK_MODULES(mkdeftag ofstd oflog)
 
 ADD_CUSTOM_TARGET(gendeftag
         COMMAND mkdeftag -o ${dcmdata_SOURCE_DIR}/include/dcmtk/dcmdata/dcdeftag.h ${DICTIONARIES}

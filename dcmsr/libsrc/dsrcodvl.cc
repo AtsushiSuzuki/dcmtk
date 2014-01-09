@@ -148,7 +148,6 @@ void DSRCodedEntryValue::clear()
 
 OFBool DSRCodedEntryValue::isValid() const
 {
-    /* tbd: there might be an issue with checking extended characters! */
     return checkCurrentValue().good();
 }
 
@@ -257,12 +256,12 @@ OFCondition DSRCodedEntryValue::readSequence(DcmItem &dataset,
                                              const OFString &type)
 {
     /* read CodeSequence */
-    DcmSequenceOfItems dseq(tagKey);
-    OFCondition result = DSRTypes::getElementFromDataset(dataset, dseq);
-    DSRTypes::checkElementValue(dseq, "1", type, result);
+    DcmSequenceOfItems *dseq = NULL;
+    OFCondition result = dataset.findAndGetSequence(tagKey, dseq);
+    DSRTypes::checkElementValue(dseq, tagKey, "1", type, result);
     if (result.good())
     {
-        DcmItem *ditem = dseq.getItem(0);
+        DcmItem *ditem = dseq->getItem(0);
         if (ditem != NULL)
         {
             /* read Code */
@@ -592,15 +591,16 @@ OFCondition DSRCodedEntryValue::checkCode(const OFString &codeValue,
     /* first, make sure that the mandatory values are non-empty */
     if (codeValue.empty() || codingSchemeDesignator.empty() || codeMeaning.empty())
         result = SR_EC_InvalidValue;
-    /* then, check whether the passed values are valid */
+    /* then, check whether the passed values are valid with regards to VR and VM.
+     * tbd: unfortunately, we do not know the character set, so "UNKNOWN" is used. */
     if (result.good())
-        result = DcmShortString::checkStringValue(codeValue, "1");
+        result = DcmShortString::checkStringValue(codeValue, "1", "UNKNOWN");
     if (result.good())
-        result = DcmShortString::checkStringValue(codingSchemeDesignator, "1");
+        result = DcmShortString::checkStringValue(codingSchemeDesignator, "1", "UNKNOWN");
     if (result.good())
-        result = DcmShortString::checkStringValue(codingSchemeVersion, "1");
+        result = DcmShortString::checkStringValue(codingSchemeVersion, "1", "UNKNOWN");
     if (result.good())
-        result = DcmLongString::checkStringValue(codeMeaning, "1");
+        result = DcmLongString::checkStringValue(codeMeaning, "1", "UNKNOWN");
     /* tbd: also need to check correctness of the code (requires code dictionary) */
     return result;
 }

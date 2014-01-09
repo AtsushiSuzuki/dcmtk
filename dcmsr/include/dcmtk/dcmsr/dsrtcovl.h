@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2000-2012, OFFIS e.V.
+ *  Copyright (C) 2000-2013, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -36,7 +36,7 @@
  *  class declaration  *
  *---------------------*/
 
-/** Class for temporal coordinate values
+/** Class for temporal coordinates values
  */
 class DCMTK_DCMSR_EXPORT DSRTemporalCoordinatesValue
 {
@@ -45,7 +45,7 @@ class DCMTK_DCMSR_EXPORT DSRTemporalCoordinatesValue
 
   public:
 
-    /** default contructor
+    /** default constructor
      */
     DSRTemporalCoordinatesValue();
 
@@ -212,7 +212,7 @@ class DCMTK_DCMSR_EXPORT DSRTemporalCoordinatesValue
 
     /** read temporal coordinates value from dataset.
      *  Please note that all three lists are (tried to) read from the dataset.  If more than
-     *  one list is present a warning messsage is reported.
+     *  one list is present a warning message is reported.
      ** @param  dataset  DICOM dataset from which the value should be read
      ** @return status, EC_Normal if successful, an error code otherwise
      */
@@ -235,7 +235,7 @@ class DCMTK_DCMSR_EXPORT DSRTemporalCoordinatesValue
      *  @param  dateTimeList        list of referenced date/time to be checked
      *  @param  reportWarnings      if enabled, report a warning message on each deviation
      *                              from an expected value to the logger
-     ** @return status, EC_Normal if graphic type and data are valid, an error code otherwise
+     ** @return status, EC_Normal if checked data is valid, an error code otherwise
      */
     OFCondition checkData(const DSRTypes::E_TemporalRangeType temporalRangeType,
                           const DSRReferencedSamplePositionList &samplePositionList,

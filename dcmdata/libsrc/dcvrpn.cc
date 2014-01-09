@@ -13,7 +13,7 @@
  *
  *  Module:  dcmdata
  *
- *  Author:  Gerd Ehlers, Andreas Barth
+ *  Author:  Gerd Ehlers, Andreas Barth, Joerg Riesmeier
  *
  *  Purpose: Implementation of class DcmPersonName
  *
@@ -83,7 +83,12 @@ OFCondition DcmPersonName::checkValue(const OFString &vm,
     /* get "raw value" without any modifications (if possible) */
     OFCondition l_error = getStringValue(strVal);
     if (l_error.good())
-        l_error = DcmPersonName::checkStringValue(strVal, vm);
+    {
+        OFString charset;
+        /* try to determine the value of the SpecificCharacterSet element */
+        getSpecificCharacterSet(charset);
+        l_error = DcmPersonName::checkStringValue(strVal, vm, charset);
+    }
     return l_error;
 }
 
@@ -120,7 +125,7 @@ OFCondition DcmPersonName::writeXML(STD_NAMESPACE ostream &out,
             /* strings to hold family, first, and middle name as well as prefix and suffix component */
             OFString components[5];
             /* arrays in order to permit looping while creating the output */
-            const char* compGroupNames[3] = { "SingleByte", "Ideographic", "Phonetic" };
+            const char* compGroupNames[3] = { "Alphabetic", "Ideographic", "Phonetic" };
             const char* compNames[5] = { "FamilyName", "GivenName", "MiddleName", "NamePrefix", "NameSuffix" };
             for (unsigned int it = 0; it < vm; it++)
             {
@@ -428,7 +433,8 @@ OFCondition DcmPersonName::putNameComponents(const OFString &lastName,
 
 
 OFCondition DcmPersonName::checkStringValue(const OFString &value,
-                                            const OFString &vm)
+                                            const OFString &vm,
+                                            const OFString &charset)
 {
     /* currently not checked: maximum length per component group (64 characters) */
     OFCondition result = EC_Normal;
@@ -444,12 +450,19 @@ OFCondition DcmPersonName::checkStringValue(const OFString &value,
             /* search for next component separator */
             const size_t posEnd = value.find('\\', posStart);
             const size_t length = (posEnd == OFString_npos) ? valLen - posStart : posEnd - posStart;
-            /* check value representation */
-            const int vrID = DcmElement::scanValue(value, "pn", posStart, length);
-            if (vrID != 11)
+            if (dcmEnableVRCheckerForStringValues.get())
             {
-              result = EC_ValueRepresentationViolated;
-              break;
+                /* currently, the VR checker only supports ASCII and Latin-1 */
+                if (charset.empty() || (charset == "ISO_IR 6") || (charset == "ISO_IR 100"))
+                {
+                    /* check value representation */
+                    const int vrID = DcmElement::scanValue(value, "pn", posStart, length);
+                    if (vrID != 11)
+                    {
+                        result = EC_ValueRepresentationViolated;
+                        break;
+                    }
+                }
             }
             posStart = (posEnd == OFString_npos) ? posEnd : posEnd + 1;
         }

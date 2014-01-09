@@ -9,9 +9,30 @@ SET(DCMTK_CONFIGURATION_DONE true)
 
 # Minimum CMake version required
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-IF(CMAKE_BACKWARDS_COMPATIBILITY GREATER 2.8.11)
-  SET(CMAKE_BACKWARDS_COMPATIBILITY 2.8.11 CACHE STRING "Latest version of CMake when this project was released." FORCE)
-ENDIF(CMAKE_BACKWARDS_COMPATIBILITY GREATER 2.8.11)
+IF(CMAKE_BACKWARDS_COMPATIBILITY GREATER 2.8.12)
+  SET(CMAKE_BACKWARDS_COMPATIBILITY 2.8.12 CACHE STRING "Latest version of CMake when this project was released." FORCE)
+ENDIF(CMAKE_BACKWARDS_COMPATIBILITY GREATER 2.8.12)
+
+# CMAKE_BUILD_TYPE is set to value "Release" if none is specified by the
+# selected build file generator. For those generators that support multiple
+# configuration types (e.g. Debug, Release), CMAKE_CONFIGURATION_TYPES holds
+# possible values.  For other generators this value is empty, and for those
+# generators the build type is controlled at CMake time by CMAKE_BUILD_TYPE.
+# See http://www.cmake.org/pipermail/cmake/2006-January/008065.html for
+# details.
+#
+# To disable the CMAKE_BUILD_TYPE default value, set CMAKE_BUILD_TYPE to value
+# "None" during CMake configuration, e.g. use "-DCMAKE_BUILD_TYPE:STRING=None"
+# on the command line.  This may be useful if the compiler flags should be
+# controlled manually (e.g. as defined in environment variables like CXXFLAGS)
+# and no CMake defaults related to the selected configuration type kick in.
+IF(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  MESSAGE(STATUS "Setting build type to 'Release' as none was specified.")
+  SET(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+ENDIF(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+
 
 # Basic version information
 # (Starting with version 3.5.5, an odd number at the last position indicates
@@ -31,7 +52,8 @@ SET(DCMTK_PACKAGE_VERSION_NUMBER ${DCMTK_MAJOR_VERSION}${DCMTK_MINOR_VERSION}${D
 SET(DCMTK_PACKAGE_VERSION_SUFFIX "")
 #SET(DCMTK_PACKAGE_TARNAME "dcmtk-${DCMTK_PACKAGE_VERSION}")
 #SET(DCMTK_PACKAGE_STRING "dcmtk ${DCMTK_PACKAGE_VERSION}")
-#SET(DCMTK_PACKAGE_BUGREPORT "dicom-bugs@offis.de")
+#SET(DCMTK_PACKAGE_BUGREPORT "bugs@dcmtk.org")
+#SET(DCMTK_PACKAGE_URL "http://www.dcmtk.org/")
 
 # Shared library version information
 SET(DCMTK_LIBRARY_PROPERTIES VERSION "${DCMTK_PACKAGE_VERSION}" SOVERSION "${DCMTK_ABI_VERSION}")

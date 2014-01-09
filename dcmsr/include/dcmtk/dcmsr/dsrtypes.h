@@ -100,7 +100,7 @@ class DSRIODConstraintChecker;
 
 
 /*-----------------------*
- *  contant definitions  *
+ *  constant definitions  *
  *-----------------------*/
 
 /** @name specific error conditions for module dcmsr.
@@ -676,7 +676,7 @@ class DCMTK_DCMSR_EXPORT DSRTypes
         CS_Japanese,
         /// ISO-IR 166: Thai
         CS_Thai,
-        // UTF-8: Unicode in UTF-8
+        /// UTF-8: Unicode in UTF-8
         CS_UTF8,
         /// internal type used to mark the last entry
         CS_last = CS_UTF8
@@ -1090,7 +1090,7 @@ class DCMTK_DCMSR_EXPORT DSRTypes
      */
     static OFBool checkForValidReference(const OFString &stringValue);
 
-    /** create specified SR IOD content relationship contraint checker object.
+    /** create specified SR IOD content relationship constraint checker object.
      *  Please note that the created object has to be deleted by the caller.
      ** @param  documentType  associated SR document type for which the checker object is created
      ** @return pointer to new IOD checker object if successful, NULL if document type is not supported
@@ -1102,7 +1102,7 @@ class DCMTK_DCMSR_EXPORT DSRTypes
      *  It facilitates the introduction of new relationship/value types and the maintenance.
      ** @param  relationshipType  relationship type of the node to be created
      *  @param  valueType         value type of the node to be created
-     ** @return pointer to the new document tree nodeif successful, NULL otherwise
+     ** @return pointer to the new document tree node if successful, NULL otherwise
      */
     static DSRDocumentTreeNode *createDocumentTreeNode(const E_RelationshipType relationshipType,
                                                        const E_ValueType valueType);
@@ -1220,6 +1220,24 @@ class DCMTK_DCMSR_EXPORT DSRTypes
                                                const OFBool allowEmpty = OFTrue);
 
     /** check element value for correct value multiplicity and type.
+     ** @param  delem       pointer to DICOM element to be checked (might be NULL)
+     *  @param  tagKey      DICOM tag of the DICOM element then parameter 'delem' points to
+     *  @param  vm          value multiplicity (according to the data dictionary) to be checked for.
+     *                      (See DcmElement::checkVM() for a list of valid values.)
+     *                      Interpreted as cardinality (number of items) for sequence attributes.
+     *  @param  type        value type (valid value: "1", "1C", "2", something else)
+     *  @param  searchCond  optional flag indicating the status of a previous 'search' function call
+     *  @param  moduleName  optional module name to be printed (default: "SR document" if NULL)
+     ** @return OFTrue if element value is correct, OFFalse otherwise
+     */
+    static OFBool checkElementValue(DcmElement *delem,
+                                    const DcmTagKey &tagKey,
+                                    const OFString &vm,
+                                    const OFString &type,
+                                    const OFCondition &searchCond = EC_Normal,
+                                    const char *moduleName = NULL);
+
+    /** check element value for correct value multiplicity and type.
      ** @param  delem       DICOM element to be checked
      *  @param  vm          value multiplicity (according to the data dictionary) to be checked for.
      *                      (See DcmElement::checkVM() for a list of valid values.)
@@ -1238,7 +1256,7 @@ class DCMTK_DCMSR_EXPORT DSRTypes
     /** get element from dataset and check it for correct value multiplicity and type.
      ** @param  dataset     DICOM dataset from which the element should be retrieved.
      *                      (Would be 'const' if the methods from 'dcmdata' would also be 'const'.)
-     *  @param  delem       DICOM element used to store the value
+     *  @param  delem       DICOM element used to store the value (always creates a copy!)
      *  @param  vm          value multiplicity (according to the data dictionary) to be checked for.
      *                      (See DcmElement::checkVM() for a list of valid values.)
      *                      Interpreted as cardinality (number of items) for sequence attributes.

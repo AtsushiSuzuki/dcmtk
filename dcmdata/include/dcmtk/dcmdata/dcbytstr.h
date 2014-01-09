@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 1994-2011, OFFIS e.V.
+ *  Copyright (C) 1994-2013, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -28,6 +28,17 @@
 #include "dcmtk/dcmdata/dctypes.h"
 #include "dcmtk/dcmdata/dcelem.h"
 #include "dcmtk/ofstd/ofstring.h"
+
+
+/** This flag defines whether the VR checker is actually used by the various
+ *  checkStringValue() methods.  Since this checker is currently limited to
+ *  ASCII and Latin-1, and the detection of the character set might fail for
+ *  incorrectly encoded DICOM datasets, this check can be disabled globally.
+ *  Please note, however, that other checks (i.e. VM and max. value length)
+ *  are still performed if the optional parameters are set accordingly.
+ *  By default, the VR checker is enabled (value: "OFTrue").
+ */
+extern DCMTK_DCMDATA_EXPORT OFGlobal<OFBool> dcmEnableVRCheckerForStringValues;  /* default: OFTrue */
 
 
 /** base class for all DICOM value representations storing a character string
@@ -325,13 +336,16 @@ class DCMTK_DCMDATA_EXPORT DcmByteString: public DcmElement
      *  @param vr two-character identifier of the VR to be checked (lower case)
      *  @param vrID expected numeric identifier of the VR
      *  @param maxLen maximum number of characters allowed for a single value (0 = no check)
+     *  @param charset character set (according to the value of the SpecificCharacterSet
+     *    element) to be used for checking the string value. The default is ASCII (7-bit).
      *  @return status of the check, EC_Normal if value is correct, an error code otherwise
      */
     static OFCondition checkStringValue(const OFString &value,
                                         const OFString &vm,
                                         const OFString &vr,
                                         const int vrID,
-                                        const size_t maxLen = 0);
+                                        const size_t maxLen = 0,
+                                        const OFString &charset = "");
 
 private:
 

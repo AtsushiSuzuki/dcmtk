@@ -34,6 +34,8 @@
  */
 OFGlobal<OFBool> dcmEnableUnknownVRGeneration(OFTrue);
 OFGlobal<OFBool> dcmEnableUnlimitedTextVRGeneration(OFTrue);
+OFGlobal<OFBool> dcmEnableOtherFloatStringVRGeneration(OFTrue);
+OFGlobal<OFBool> dcmEnableOtherDoubleStringVRGeneration(OFTrue);
 OFGlobal<OFBool> dcmEnableUnknownVRConversion(OFFalse);
 
 /*
@@ -114,7 +116,7 @@ static const DcmVREntry DcmVRDict[] = {
     { EVR_UNKNOWN, "??", sizeof(Uint8), /* EVR_UNKNOWN (i.e. "future" VRs) should be mapped to UN or OB */
       DCMVR_PROP_NONSTANDARD | DCMVR_PROP_INTERNAL | DCMVR_PROP_EXTENDEDLENGTHENCODING, 0, DCM_UndefinedLength },
 
-    /* Unknown Value Representation - Supplement 14 */
+    /* Unknown Value Representation */
     { EVR_UN, "UN", sizeof(Uint8), DCMVR_PROP_EXTENDEDLENGTHENCODING, 0, DCM_UndefinedLength },
 
     /* Pixel Data - only used in ident() */
@@ -123,7 +125,7 @@ static const DcmVREntry DcmVRDict[] = {
     { EVR_OverlayData, "OverlayData", 0, DCMVR_PROP_INTERNAL, 0, DCM_UndefinedLength },
 
     { EVR_UNKNOWN2B, "??", sizeof(Uint8), /* illegal VRs, we assume no extended length coding */
-      DCMVR_PROP_NONSTANDARD | DCMVR_PROP_INTERNAL , 0, DCM_UndefinedLength },
+      DCMVR_PROP_NONSTANDARD | DCMVR_PROP_INTERNAL, 0, DCM_UndefinedLength },
 
 };
 
@@ -148,7 +150,7 @@ public:
 DcmVRDict_checker::DcmVRDict_checker()
   : error_found(OFFalse)
 {
-    for (int i=0; i<DcmVRDict_DIM; i++) {
+    for (int i = 0; i < DcmVRDict_DIM; i++) {
         if (DcmVRDict[i].vr != i) {
             error_found = OFTrue;
             DCMDATA_FATAL("DcmVRDict: Internal ERROR: inconsistent indexing: " << DcmVRDict[i].vrName);
@@ -168,7 +170,7 @@ const DcmVRDict_checker DcmVRDict_startup_check();
 void
 DcmVR::setVR(DcmEVR evr)
 {
-    if ( (OFstatic_cast(int, evr) >= 0) && (OFstatic_cast(int, evr) < DcmVRDict_DIM)) {
+    if ((OFstatic_cast(int, evr) >= 0) && (OFstatic_cast(int, evr) < DcmVRDict_DIM)) {
         vr = evr;
     } else {
         vr = EVR_UNKNOWN;
@@ -179,11 +181,11 @@ void
 DcmVR::setVR(const char* vrName)
 {
     vr = EVR_UNKNOWN;   /* default */
-    if ( vrName != NULL)
+    if (vrName != NULL)
     {
         int found = OFFalse;
         int i = 0;
-        for (i=0;  (!found && (i < DcmVRDict_DIM)); i++)
+        for (i = 0;  (!found && (i < DcmVRDict_DIM)); i++)
         {
             if (strncmp(vrName, DcmVRDict[i].vrName, 2) == 0)
             {
@@ -201,9 +203,9 @@ DcmVR::setVR(const char* vrName)
          * All other VR strings are treated as "illegal" VRs.
          */
         register char c1 = *vrName;
-        register char c2 = (c1)?(*(vrName+1)):('\0');
-        if ((c1=='?')&&(c2=='?')) vr = EVR_UNKNOWN2B;
-        if (!found && ((c1<'A')||(c1>'Z')||(c2<'A')||(c2>'Z'))) vr = EVR_UNKNOWN2B;
+        register char c2 = (c1) ? (*(vrName + 1)) : ('\0');
+        if ((c1 == '?') && (c2 == '?')) vr = EVR_UNKNOWN2B;
+        if (!found && ((c1 < 'A') || (c1 > 'Z') || (c2 < 'A') || (c2 > 'Z'))) vr = EVR_UNKNOWN2B;
     }
 }
 
@@ -216,42 +218,63 @@ DcmVR::getValidEVR() const
         evr = vr;
     } else {
         switch (vr) {
-        case EVR_up:
-            evr = EVR_UL;
-            break;
-        case EVR_xs:
-            evr = EVR_US;
-            break;
-        case EVR_lt:
-            evr = EVR_OW;
-            break;
-        case EVR_ox:
-        case EVR_pixelSQ:
-            evr = EVR_OB;
-            break;
-        default:
-            evr = EVR_UN;   /* handle as Unknown VR (Supplement 14) */
-            break;
+            case EVR_up:
+                evr = EVR_UL;
+                break;
+            case EVR_xs:
+                evr = EVR_US;
+                break;
+            case EVR_lt:
+                evr = EVR_OW;
+                break;
+            case EVR_ox:
+            case EVR_pixelSQ:
+                evr = EVR_OB;
+                break;
+            default:
+                evr = EVR_UN;   /* handle as Unknown VR */
+                break;
         }
     }
 
     /*
-    ** If the generation of UN is not globally enabled then use OB instead.
-    ** We may not want to generate UN if other software cannot handle it.
+    ** If the generation of post-1993 VRs is not globally enabled then use OB instead.
+    ** We may not want to generate these "new" VRs if other software cannot handle it.
     */
-    if (evr == EVR_UN)
-    {
-      if (!dcmEnableUnknownVRGeneration.get()) evr = EVR_OB; /* handle UN as if OB */
+    switch (evr) {
+        case EVR_UN:
+            if (!dcmEnableUnknownVRGeneration.get())
+            {
+                DCMDATA_TRACE("DcmVR::getValidEVR() VR=\"UN\" replaced by \"OB\" since support is disabled");
+                evr = EVR_OB; /* handle UN as if OB */
+            }
+            break;
+        case EVR_UT:
+            if (!dcmEnableUnlimitedTextVRGeneration.get())
+            {
+                DCMDATA_TRACE("DcmVR::getValidEVR() VR=\"UT\" replaced by \"OB\" since support is disabled");
+                evr = EVR_OB; /* handle UT as if OB */
+            }
+            break;
+        case EVR_OF:
+            if (!dcmEnableOtherFloatStringVRGeneration.get())
+            {
+                DCMDATA_TRACE("DcmVR::getValidEVR() VR=\"OF\" replaced by \"OB\" since support is disabled");
+                evr = EVR_OB; /* handle OF as if OB */
+            }
+            break;
+        case EVR_OD:
+            if (!dcmEnableOtherDoubleStringVRGeneration.get())
+            {
+                DCMDATA_TRACE("DcmVR::getValidEVR() VR=\"OD\" replaced by \"OB\" since support is disabled");
+                evr = EVR_OB; /* handle OD as if OB */
+            }
+            break;
+        default:
+            /* in all other cases, do nothing */
+            break;
     }
 
-    /*
-    ** If the generation of UT is not globally enabled then use OB instead.
-    ** We may not want to generate UT if other software cannot handle it.
-    */
-    if (evr == EVR_UT)
-    {
-      if (!dcmEnableUnlimitedTextVRGeneration.get()) evr = EVR_OB; /* handle UT as if OB */
-    }
     return evr;
 }
 
@@ -304,18 +327,21 @@ DcmVR::usesExtendedLengthEncoding() const
     return (DcmVRDict[vr].propertyFlags & DCMVR_PROP_EXTENDEDLENGTHENCODING) ? OFTrue : OFFalse;
 }
 
-Uint32 DcmVR::getMinValueLength() const
+Uint32
+DcmVR::getMinValueLength() const
 {
     return (DcmVRDict[vr].minValueLength);
 }
 
-Uint32 DcmVR::getMaxValueLength() const
+Uint32
+DcmVR::getMaxValueLength() const
 {
     return (DcmVRDict[vr].maxValueLength);
 }
 
-/* returns true if the vr is equivalent */
-OFBool DcmVR::isEquivalent(const DcmVR& avr) const
+/* returns true if the VR is equivalent */
+OFBool
+DcmVR::isEquivalent(const DcmVR& avr) const
 {
     DcmEVR evr = avr.getEVR();
     if (vr == evr) return OFTrue;

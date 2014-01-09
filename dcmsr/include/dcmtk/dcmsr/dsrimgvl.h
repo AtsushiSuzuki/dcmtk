@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2000-2012, OFFIS e.V.
+ *  Copyright (C) 2000-2013, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -29,6 +29,7 @@
 #include "dcmtk/dcmsr/dsrtypes.h"
 #include "dcmtk/dcmsr/dsrcomvl.h"
 #include "dcmtk/dcmsr/dsrimgfr.h"
+#include "dcmtk/dcmsr/dsrimgse.h"
 
 
 /*-----------------------*
@@ -52,11 +53,11 @@ class DCMTK_DCMSR_EXPORT DSRImageReferenceValue
 
   public:
 
-    /** default contructor
+    /** default constructor
      */
     DSRImageReferenceValue();
 
-    /** constructor
+    /** constructor.  Accepts reference to an image object.
      ** @param  sopClassUID     referenced SOP class UID of the image object.
      *                          (VR=UI, mandatory)
      *  @param  sopInstanceUID  referenced SOP instance UID of the image object.
@@ -69,7 +70,7 @@ class DCMTK_DCMSR_EXPORT DSRImageReferenceValue
                            const OFString &sopInstanceUID,
                            const OFBool check = OFTrue);
 
-    /** constructor
+    /** constructor.  Accepts reference to both an image and presentation state object.
      ** @param  imageSOPClassUID      referenced SOP class UID of the image object.
      *                                (VR=UI, mandatory)
      *  @param  imageSOPInstanceUID   referenced SOP instance UID of the image object.
@@ -94,9 +95,9 @@ class DCMTK_DCMSR_EXPORT DSRImageReferenceValue
     DSRImageReferenceValue(const DSRImageReferenceValue &referenceValue);
 
     /** copy constructor
-     ** @param  imageReferenceValue   image reference value to be copied (not checked !)
-     *  @param  pstateReferenceValue  presentation state reference value to be copied (not
-     *                                checked !)
+     ** @param  imageReferenceValue   reference to image object to be copied (not checked !)
+     *  @param  pstateReferenceValue  reference to presentation state object to be copied
+     *                                (not checked !)
      */
     DSRImageReferenceValue(const DSRCompositeReferenceValue &imageReferenceValue,
                            const DSRCompositeReferenceValue &pstateReferenceValue);
@@ -117,9 +118,11 @@ class DCMTK_DCMSR_EXPORT DSRImageReferenceValue
     virtual void clear();
 
     /** check whether the current image reference value is valid.
-     *  The reference value is valid if SOP class UID and SOP instance UID are valid (see
-     *  checkSOP...UID() for details) and the optional presentation state is valid (see
-     *  checkPresentationState()).
+     *  The reference value is valid if both SOP class UID and SOP instance UID are valid (see
+     *  checkSOPClassUID() and checkSOPInstanceUID() for details), as well as the optional
+     *  presentation state and real world value mapping objects (see checkPresentationState()
+     *  and checkRealWorldValueMapping(), respectively).  Also the presence of the optional
+     *  list of frame and segment numbers is checked using checkListData().
      ** @return OFTrue if reference value is valid, OFFalse otherwise
      */
     virtual OFBool isValid() const;
@@ -135,7 +138,9 @@ class DCMTK_DCMSR_EXPORT DSRImageReferenceValue
     /** print image reference.
      *  The output of a typical image reference value looks like this: (CT image,"1.2.3") or
      *  (CT image,"1.2.3"),(GSPS,"1.2.3.4") if a presentation state is present.
-     *  If the SOP class UID is unknown the UID is printed instead of the related name.
+     *  If the SOP class UID is unknown, the UID is printed instead of the related name.
+     *  Also, the list of referenced frame/segment numbers is shown, but not the two UIDs of
+     *  the real world value mapping object (if referenced).
      ** @param  stream  output stream to which the image reference value should be printed
      *  @param  flags   flag used to customize the output (see DSRTypes::PF_xxx)
      ** @return status, EC_Normal if successful, an error code otherwise
@@ -159,7 +164,8 @@ class DCMTK_DCMSR_EXPORT DSRImageReferenceValue
     virtual OFCondition writeXML(STD_NAMESPACE ostream &stream,
                                  const size_t flags) const;
 
-    /** render image reference value in HTML/XHTML format
+    /** render image reference value in HTML/XHTML format.
+     *  Please note that the optional icon image is never shown in the rendered output.
      ** @param  docStream    output stream to which the main HTML/XHTML document is written
      *  @param  annexStream  output stream to which the HTML/XHTML document annex is written
      *  @param  annexNumber  reference to the variable where the current annex number is
@@ -174,12 +180,15 @@ class DCMTK_DCMSR_EXPORT DSRImageReferenceValue
                                    const size_t flags) const;
 
     /** create an icon image from the given DICOM image and associate it with this image
-     *  reference.  According to the DICOM standard, this icon image should be representative
-     *  of the referenced image and the size of the icon image "may be no greater than 128 rows
-     *  by 128 columns".  For monochrome images, either the first stored or an automatically
-     *  computed min-max VOI window is selected.
-     *  Please note that this icon image is only used in readItem() and writeItem() but not in
-     *  the other input/output methods.
+     *  reference.
+     *  According to the DICOM standard, this icon image should be representative of the
+     *  referenced image and the size of the icon image "may be no greater than 128 rows by
+     *  128 columns".  For monochrome images, either the first stored or an automatically
+     *  computed min-max VOI window is selected.  Color images are converted automatically to
+     *  the photometric interpretation "PALETTE COLOR" (with 256 colors) when written to the
+     *  DICOM dataset.
+     *  Please note that this icon image is only used in readItem() and writeItem() but not
+     *  in the other input/output methods.
      ** @param  filename  name of the DICOM image file to be used to create the icon image
      *  @param  frame     number of the frame to be used to create the icon image
      *                    (0 = 1st frame)
@@ -195,12 +204,15 @@ class DCMTK_DCMSR_EXPORT DSRImageReferenceValue
                                 const unsigned long height = 64);
 
     /** create an icon image from the given DICOM image and associate it with this image
-     *  reference.  According to the DICOM standard, this icon image should be representative
-     *  of the referenced image and the size of the icon image "may be no greater than 128 rows
-     *  by 128 columns".  For monochrome images, either the first stored or an automatically
-     *  computed min-max VOI window is selected.
-     *  Please note that this icon image is only used in readItem() and writeItem() but not in
-     *  the other input/output methods.
+     *  reference.
+     *  According to the DICOM standard, this icon image should be representative of the
+     *  referenced image and the size of the icon image "may be no greater than 128 rows by
+     *  128 columns".  For monochrome images, either the first stored or an automatically
+     *  computed min-max VOI window is selected.  Color images are converted automatically to
+     *  the photometric interpretation "PALETTE COLOR" (with 256 colors) when written to the
+     *  DICOM dataset.
+     *  Please note that this icon image is only used in readItem() and writeItem() but not
+     *  in the other input/output methods.
      ** @param  object  pointer to DICOM data structures (fileformat, dataset or item) that
      *                  contain the DICOM image to be used to create the icon image
      *  @param  xfer    transfer syntax of the 'object'.  In case of a fileformat or dataset,
@@ -219,11 +231,13 @@ class DCMTK_DCMSR_EXPORT DSRImageReferenceValue
                                 const unsigned long height = 64);
 
     /** create an icon image from the given DICOM image and associate it with this image
-     *  reference.  According to the DICOM standard, this icon image should be representative
-     *  of the referenced image and the size of the icon image "may be no greater than 128 rows
-     *  by 128 columns".
-     *  Please note that this icon image is only used in readItem() and writeItem() but not in
-     *  the other input/output methods.
+     *  reference.
+     *  According to the DICOM standard, this icon image should be representative of the
+     *  referenced image and the size of the icon image "may be no greater than 128 rows by
+     *  128 columns".  Color images are converted automatically to the photometric
+     *  interpretation "PALETTE COLOR" (with 256 colors) when written to the DICOM dataset.
+     *  Please note that this icon image is only used in readItem() and writeItem() but not
+     *  in the other input/output methods.
      ** @param  image   pointer to DICOM image to be used to create the icon image.  Only
      *                  single frame images should be passed since only the first frame is
      *                  used.
@@ -278,32 +292,66 @@ class DCMTK_DCMSR_EXPORT DSRImageReferenceValue
     OFCondition setValue(const DSRImageReferenceValue &referenceValue,
                          const OFBool check = OFTrue);
 
-    /** get reference to presentation state value
-     ** @return reference to presentation state value (might be empty or invalid)
+    /** get reference to presentation state object
+     ** @return reference to presentation state object (might be empty or invalid)
      */
     inline const DSRCompositeReferenceValue &getPresentationState() const
     {
         return PresentationState;
     }
 
-    /** set presentation state value.
-     *  Before setting the presentation state value, it is usually checked.  If the value is
-     *  invalid, the current value is not replaced and remains unchanged.
+    /** set reference to presentation state object.
+     *  Before setting the reference, it is usually checked.  If the value is invalid, the
+     *  current value is not replaced and remains unchanged.
      ** @param  pstateValue  value to be set
      *  @param  check        If enabled, check value for validity before setting it.  See
-     *                       checkXXX() for details.  Empty UID values are accepted for
-     *                       disabling the optional presentation state.
+     *                       checkPresentationState() for details.  Empty UID values are
+     *                       accepted for disabling the optional presentation state.
      ** @return status, EC_Normal if successful, an error code otherwise
      */
     OFCondition setPresentationState(const DSRCompositeReferenceValue &pstateValue,
                                      const OFBool check = OFTrue);
 
-    /** get reference to list of referenced frame numbers
+    /** get reference to real world value mapping object
+     ** @return reference to real world value mapping object (might be empty or invalid)
+     */
+    inline const DSRCompositeReferenceValue &getRealWorldValueMapping() const
+    {
+        return RealWorldValueMapping;
+    }
+
+    /** set reference to real world value mapping object.
+     *  Before setting the reference, it is usually checked.  If the value is invalid, the
+     *  current value is not replaced and remains unchanged.
+     ** @param  mappingValue  value to be set
+     *  @param  check         If enabled, check value for validity before setting it.  See
+     *                        checkRealWorldValueMapping() for details.  Empty UID values
+     *                        are accepted for disabling the optional presentation state.
+     ** @return status, EC_Normal if successful, an error code otherwise
+     */
+    OFCondition setRealWorldValueMapping(const DSRCompositeReferenceValue &mappingValue,
+                                         const OFBool check = OFTrue);
+
+    /** get reference to list of referenced frame numbers.
+     *  According to the DICOM standard, this list is required if the referenced image has
+     *  multiple frames, and the reference does not apply to all frames and the list of
+     *  referenced segment numbers is empty/absent.
      ** @return reference to frame list
      */
     inline DSRImageFrameList &getFrameList()
     {
         return FrameList;
+    }
+
+    /** get reference to list of referenced segment numbers.
+     *  According to the DICOM standard, this list is required if the referenced image is
+     *  a segmentation object, and the reference does not apply to all segments and the list
+     *  of referenced frame numbers is empty/absent.
+     ** @return reference to segment list
+     */
+    inline DSRImageSegmentList &getSegmentList()
+    {
+        return SegmentList;
     }
 
     /** check whether the image reference applies to a specific frame.
@@ -313,6 +361,14 @@ class DCMTK_DCMSR_EXPORT DSRImageReferenceValue
      ** @return OFTrue if reference applies to the specified frame, OFFalse otherwise
      */
     OFBool appliesToFrame(const Sint32 frameNumber) const;
+
+    /** check whether the image reference applies to a specific segment.
+     *  The image reference applies to a segment (of a segmentation image) if the list of
+     *  referenced segment numbers is empty or the segment number is part of the list.
+     ** @param  segmentNumber  number of the segment to be checked
+     ** @return OFTrue if reference applies to the specified segment, OFFalse otherwise
+     */
+    OFBool appliesToSegment(const Uint16 segmentNumber) const;
 
 
   protected:
@@ -347,21 +403,53 @@ class DCMTK_DCMSR_EXPORT DSRImageReferenceValue
     virtual OFCondition checkSOPClassUID(const OFString &sopClassUID) const;
 
     /** check the given reference to a presentation state object for validity.
-     *  The presentation state object is "valid" if both UIDs are empty or both are not
-     *  empty and SOP class UID refers to a softcopy presentation state (see
+     *  The reference is "valid" if both UIDs are empty or both are not empty and
+     *  SOP class UID refers to a softcopy presentation state object (see
      *  DSRTypes::E_PresentationStateType for a list of supported SOP classes).
      ** @param  referenceValue  value to be checked
      ** @return status, EC_Normal if value is valid, an error code otherwise
      */
     virtual OFCondition checkPresentationState(const DSRCompositeReferenceValue &referenceValue) const;
 
+    /** check the given reference to a real world value mapping object for validity.
+     *  The reference is "valid" if both UIDs are empty or both are not empty and
+     *  SOP class UID refers to the "Real World Value Mapping Storage SOP Class".
+     ** @param  referenceValue  value to be checked
+     ** @return status, EC_Normal if value is valid, an error code otherwise
+     */
+    virtual OFCondition checkRealWorldValueMapping(const DSRCompositeReferenceValue &referenceValue) const;
+
+    /** check the given list of frame and segment numbers for validity.
+     *  The only check that is currently performed is that either both lists are empty or only
+     *  one of them is non-empty, because otherwise the "type 1C" condition would be violated.
+     ** @param  frameList       list of referenced frame numbers to be checked
+     *  @param  segmentList     list of referenced segment numbers to be checked
+     *  @param  reportWarnings  if enabled, report a warning message on each deviation from an
+     *                          expected value to the logger
+     ** @return status, EC_Normal if checked data is valid, an error code otherwise
+     */
+    OFCondition checkListData(const DSRImageFrameList &frameList,
+                              const DSRImageSegmentList &segmentList,
+                              const OFBool reportWarnings = OFFalse) const;
+
+    /** check the currently stored image reference value for validity.
+     *  See above checkXXX() methods and DSRCompositeReferenceValue::checkCurrentValue()
+     *  for details.
+     ** @return status, EC_Normal if current value is valid, an error code otherwise
+     */
+    OFCondition checkCurrentValue() const;
+
 
   private:
 
-    /// composite reference value (SOP class/instance UID) to presentation state (optional)
-    DSRCompositeReferenceValue PresentationState;
     /// list of referenced frame numbers (associated DICOM VR=IS, VM=1-n, type 1C)
     DSRImageFrameList FrameList;
+    /// list of referenced segment numbers (associated DICOM VR=US, VM=1-n, type 1C)
+    DSRImageSegmentList SegmentList;
+    /// composite reference value (UIDs) to presentation state object (optional)
+    DSRCompositeReferenceValue PresentationState;
+    /// composite reference value (UIDs) to real world value mapping object (optional)
+    DSRCompositeReferenceValue RealWorldValueMapping;
     /// icon image from Icon Image Sequence (optional)
     DicomImage *IconImage;
 };

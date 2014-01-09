@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2002-2010, OFFIS e.V.
+ *  Copyright (C) 2002-2013, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -350,11 +350,15 @@ int main(int argc, char *argv[])
       {
           dcmEnableUnknownVRGeneration.set(OFTrue);
           dcmEnableUnlimitedTextVRGeneration.set(OFTrue);
+          dcmEnableOtherFloatStringVRGeneration.set(OFTrue);
+          dcmEnableOtherDoubleStringVRGeneration.set(OFTrue);
       }
       if (cmd.findOption("--disable-new-vr"))
       {
           dcmEnableUnknownVRGeneration.set(OFFalse);
           dcmEnableUnlimitedTextVRGeneration.set(OFFalse);
+          dcmEnableOtherFloatStringVRGeneration.set(OFFalse);
+          dcmEnableOtherDoubleStringVRGeneration.set(OFFalse);
       }
       cmd.endOptionBlock();
 
@@ -602,10 +606,13 @@ int main(int argc, char *argv[])
     const char *oldImageType = NULL;
     if (dataset->findAndGetString(DCM_ImageType, oldImageType).good())
     {
-        // append old image type information beginning with second entry
-        const char *pos = strchr(oldImageType, '\\');
-        if (pos != NULL)
-            imageType += pos;
+        if (oldImageType != NULL)
+        {
+            // append old image type information beginning with second entry
+            const char *pos = strchr(oldImageType, '\\');
+            if (pos != NULL)
+                imageType += pos;
+        }
     }
     dataset->putAndInsertString(DCM_ImageType, imageType.c_str());
 

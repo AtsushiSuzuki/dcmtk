@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2002-2012, OFFIS e.V.
+ *  Copyright (C) 2002-2013, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -91,45 +91,42 @@ OFCondition DSRSOPInstanceReferenceList::SeriesStruct::read(DcmItem &dataset)
     getAndCheckStringValueFromDataset(dataset, DCM_StorageMediaFileSetID, StorageMediaFileSetID, "1", "3", "ReferencedSeriesSequence");
     getAndCheckStringValueFromDataset(dataset, DCM_StorageMediaFileSetUID, StorageMediaFileSetUID, "1", "3", "ReferencedSeriesSequence");
     /* then, check whether sequence is present and non-empty */
-    DcmSequenceOfItems sequence(DCM_ReferencedSOPSequence);
-    OFCondition result = getElementFromDataset(dataset, sequence);
-    checkElementValue(sequence, "1-n", "1", result);
+    DcmSequenceOfItems *sequence = NULL;
+    OFCondition result = dataset.findAndGetSequence(DCM_ReferencedSOPSequence, sequence);
+    checkElementValue(sequence, DCM_ReferencedSOPSequence, "1-n", "1", result);
     if (result.good())
     {
-        const unsigned long count = sequence.card();
         /* iterate over all sequence items */
-        for (unsigned long i = 0; i < count; i++)
+        DcmObject *object = NULL;
+        while ((object = sequence->nextInContainer(object)) != NULL)
         {
-            DcmItem *item = sequence.getItem(i);
-            if (item != NULL)
+            DcmItem *item = OFstatic_cast(DcmItem *, object);
+            /* get the SOP class and SOP instance UID */
+            OFString sopClassUID, instanceUID;
+            if (getAndCheckStringValueFromDataset(*item, DCM_ReferencedSOPClassUID, sopClassUID, "1", "1", "ReferencedSOPSequence").good() &&
+                getAndCheckStringValueFromDataset(*item, DCM_ReferencedSOPInstanceUID, instanceUID, "1", "1", "ReferencedSOPSequence").good())
             {
-                /* get the SOP class and SOP instance UID */
-                OFString sopClassUID, instanceUID;
-                if (getAndCheckStringValueFromDataset(*item, DCM_ReferencedSOPClassUID, sopClassUID, "1", "1", "ReferencedSOPSequence").good() &&
-                    getAndCheckStringValueFromDataset(*item, DCM_ReferencedSOPInstanceUID, instanceUID, "1", "1", "ReferencedSOPSequence").good())
+                /* check whether instance item already exists */
+                InstanceStruct *instance = gotoInstance(instanceUID);
+                if (instance == NULL)
                 {
-                    /* check whether instance item already exists */
-                    InstanceStruct *instance = gotoInstance(instanceUID);
-                    if (instance == NULL)
+                    /* if not, create new instance list item */
+                    instance = new InstanceStruct(sopClassUID, instanceUID);
+                    if (instance != NULL)
                     {
-                        /* if not, create new instance list item */
-                        instance = new InstanceStruct(sopClassUID, instanceUID);
-                        if (instance != NULL)
-                        {
-                            /* add add it to the list of instances */
-                            InstanceList.push_back(instance);
-                            /* set cursor to new position */
-                            Iterator = --InstanceList.end();
-                            /* read additional information */
-                            instance->PurposeOfReference.readSequence(*item, DCM_PurposeOfReferenceCodeSequence, "3");
-                        } else {
-                            result = EC_MemoryExhausted;
-                            break;
-                        }
+                        /* add add it to the list of instances */
+                        InstanceList.push_back(instance);
+                        /* set cursor to new position */
+                        Iterator = --InstanceList.end();
+                        /* read additional information */
+                        instance->PurposeOfReference.readSequence(*item, DCM_PurposeOfReferenceCodeSequence, "3");
                     } else {
-                        /* report a warning message and ignore this entry */
-                        DCMSR_WARN("SOP Instance \"" << instanceUID << "\" already exists in reference list ... ignoring");
+                        result = EC_MemoryExhausted;
+                        break;
                     }
+                } else {
+                    /* report a warning message and ignore this entry */
+                    DCMSR_WARN("SOP Instance \"" << instanceUID << "\" already exists in reference list ... ignoring");
                 }
             }
         }
@@ -449,45 +446,42 @@ size_t DSRSOPInstanceReferenceList::StudyStruct::getNumberOfInstances() const
 OFCondition DSRSOPInstanceReferenceList::StudyStruct::read(DcmItem &dataset)
 {
     /* first, check whether sequence is present and non-empty */
-    DcmSequenceOfItems sequence(DCM_ReferencedSeriesSequence);
-    OFCondition result = getElementFromDataset(dataset, sequence);
-    checkElementValue(sequence, "1-n", "1", result);
+    DcmSequenceOfItems *sequence = NULL;
+    OFCondition result = dataset.findAndGetSequence(DCM_ReferencedSeriesSequence, sequence);
+    checkElementValue(sequence, DCM_ReferencedSeriesSequence, "1-n", "1", result);
     if (result.good())
     {
-        const unsigned long count = sequence.card();
         /* iterate over all sequence items */
-        for (unsigned long i = 0; i < count; i++)
+        DcmObject *object = NULL;
+        while ((object = sequence->nextInContainer(object)) != NULL)
         {
-            DcmItem *item = sequence.getItem(i);
-            if (item != NULL)
+            DcmItem *item = OFstatic_cast(DcmItem *, object);
+            /* get the series instance UID */
+            OFString seriesUID;
+            if (getAndCheckStringValueFromDataset(*item, DCM_SeriesInstanceUID, seriesUID, "1", "1", "ReferencedSeriesSequence").good())
             {
-                /* get the series instance UID */
-                OFString seriesUID;
-                if (getAndCheckStringValueFromDataset(*item, DCM_SeriesInstanceUID, seriesUID, "1", "1", "ReferencedSeriesSequence").good())
+                /* check whether series item already exists,
+                    because the internal structure is organized in a strictly hierarchical manner  */
+                SeriesStruct *series = gotoSeries(seriesUID);
+                if (series == NULL)
                 {
-                    /* check whether series item already exists,
-                       because the internal structure is organized in a strictly hierarchical manner  */
-                    SeriesStruct *series = gotoSeries(seriesUID);
-                    if (series == NULL)
-                    {
-                        /* if not, create a new series list item */
-                        series = new SeriesStruct(seriesUID);
-                        if (series != NULL)
-                        {
-                            /* and add it to the list of studies */
-                            SeriesList.push_back(series);
-                        } else {
-                            result = EC_MemoryExhausted;
-                            break;
-                        }
-                    }
+                    /* if not, create a new series list item */
+                    series = new SeriesStruct(seriesUID);
                     if (series != NULL)
                     {
-                        /* set cursor to new position */
-                        Iterator = --SeriesList.end();
-                        /* read further attributes on series level and the instance level */
-                        result = series->read(*item);
+                        /* and add it to the list of studies */
+                        SeriesList.push_back(series);
+                    } else {
+                        result = EC_MemoryExhausted;
+                        break;
                     }
+                }
+                if (series != NULL)
+                {
+                    /* set cursor to new position */
+                    Iterator = --SeriesList.end();
+                    /* read further attributes on series level and the instance level */
+                    result = series->read(*item);
                 }
             }
         }
@@ -825,46 +819,43 @@ size_t DSRSOPInstanceReferenceList::getNumberOfInstances() const
 OFCondition DSRSOPInstanceReferenceList::read(DcmItem &dataset)
 {
     /* first, check whether sequence is present and non-empty */
-    DcmSequenceOfItems sequence(SequenceTag);
-    OFCondition result = getElementFromDataset(dataset, sequence);
-    checkElementValue(sequence, "1-n", "1C", result);
+    DcmSequenceOfItems *sequence = NULL;
+    OFCondition result = dataset.findAndGetSequence(SequenceTag, sequence);
+    checkElementValue(sequence, SequenceTag, "1-n", "1C", result);
     if (result.good())
     {
         OFString sequenceName = DcmTag(SequenceTag).getTagName();
-        const unsigned long count = sequence.card();
         /* iterate over all sequence items */
-        for (unsigned long i = 0; i < count; i++)
+        DcmObject *object = NULL;
+        while ((object = sequence->nextInContainer(object)) != NULL)
         {
-            DcmItem *item = sequence.getItem(i);
-            if (item != NULL)
+            DcmItem *item = OFstatic_cast(DcmItem *, object);
+            /* get the study instance UID */
+            OFString studyUID;
+            if (getAndCheckStringValueFromDataset(*item, DCM_StudyInstanceUID, studyUID, "1", "1", sequenceName.c_str()).good())
             {
-                /* get the study instance UID */
-                OFString studyUID;
-                if (getAndCheckStringValueFromDataset(*item, DCM_StudyInstanceUID, studyUID, "1", "1", sequenceName.c_str()).good())
+                /* check whether study item already exists,
+                    because the internal structure is organized in a strictly hierarchical manner  */
+                StudyStruct *study = gotoStudy(studyUID);
+                if (study == NULL)
                 {
-                    /* check whether study item already exists,
-                       because the internal structure is organized in a strictly hierarchical manner  */
-                    StudyStruct *study = gotoStudy(studyUID);
-                    if (study == NULL)
-                    {
-                        /* if not, create a new study list item */
-                        study = new StudyStruct(studyUID);
-                        if (study != NULL)
-                        {
-                            /* and add it to the list of studies */
-                            StudyList.push_back(study);
-                        } else {
-                            result = EC_MemoryExhausted;
-                            break;
-                        }
-                    }
+                    /* if not, create a new study list item */
+                    study = new StudyStruct(studyUID);
                     if (study != NULL)
                     {
-                        /* set cursor to new position */
-                        Iterator = --StudyList.end();
-                        /* read attributes on series and instance level */
-                        result = study->read(*item);
+                        /* and add it to the list of studies */
+                        StudyList.push_back(study);
+                    } else {
+                        result = EC_MemoryExhausted;
+                        break;
                     }
+                }
+                if (study != NULL)
+                {
+                    /* set cursor to new position */
+                    Iterator = --StudyList.end();
+                    /* read attributes on series and instance level */
+                    result = study->read(*item);
                 }
             }
         }

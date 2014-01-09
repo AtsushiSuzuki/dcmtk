@@ -28,12 +28,15 @@
 #include "dcmtk/dcmimgle/dcmimage.h"
 #include "dcmtk/dcmimgle/diutils.h"
 #include "dcmtk/dcmimage/diregist.h"  /* add support for color images */
+#include "dcmtk/dcmimage/diquant.h"   /* for DcmQuant */
 
 
 DSRImageReferenceValue::DSRImageReferenceValue()
   : DSRCompositeReferenceValue(),
-    PresentationState(),
     FrameList(),
+    SegmentList(),
+    PresentationState(),
+    RealWorldValueMapping(),
     IconImage(NULL)
 {
 }
@@ -43,8 +46,10 @@ DSRImageReferenceValue::DSRImageReferenceValue(const OFString &sopClassUID,
                                                const OFString &sopInstanceUID,
                                                const OFBool check)
   : DSRCompositeReferenceValue(),
-    PresentationState(),
     FrameList(),
+    SegmentList(),
+    PresentationState(),
+    RealWorldValueMapping(),
     IconImage(NULL)
 {
     /* use the set method for checking purposes */
@@ -58,8 +63,10 @@ DSRImageReferenceValue::DSRImageReferenceValue(const OFString &imageSOPClassUID,
                                                const OFString &pstateSOPInstanceUID,
                                                const OFBool check)
   : DSRCompositeReferenceValue(),
-    PresentationState(),
     FrameList(),
+    SegmentList(),
+    PresentationState(),
+    RealWorldValueMapping(),
     IconImage(NULL)
 {
     /* use the set methods for checking purposes */
@@ -70,8 +77,10 @@ DSRImageReferenceValue::DSRImageReferenceValue(const OFString &imageSOPClassUID,
 
 DSRImageReferenceValue::DSRImageReferenceValue(const DSRImageReferenceValue &referenceValue)
   : DSRCompositeReferenceValue(referenceValue),
-    PresentationState(referenceValue.PresentationState),
     FrameList(referenceValue.FrameList),
+    SegmentList(referenceValue.SegmentList),
+    PresentationState(referenceValue.PresentationState),
+    RealWorldValueMapping(referenceValue.RealWorldValueMapping),
     IconImage(NULL)
 {
     /* do not check values since this would be unexpected to the user */
@@ -85,8 +94,10 @@ DSRImageReferenceValue::DSRImageReferenceValue(const DSRImageReferenceValue &ref
 DSRImageReferenceValue::DSRImageReferenceValue(const DSRCompositeReferenceValue &imageReferenceValue,
                                                const DSRCompositeReferenceValue &pstateReferenceValue)
   : DSRCompositeReferenceValue(imageReferenceValue),
-    PresentationState(pstateReferenceValue),
     FrameList(),
+    SegmentList(),
+    PresentationState(pstateReferenceValue),
+    RealWorldValueMapping(),
     IconImage(NULL)
 {
 }
@@ -102,8 +113,10 @@ DSRImageReferenceValue &DSRImageReferenceValue::operator=(const DSRImageReferenc
 {
     DSRCompositeReferenceValue::operator=(referenceValue);
     /* do not check since this would be unexpected to the user */
-    PresentationState = referenceValue.PresentationState;
     FrameList = referenceValue.FrameList;
+    SegmentList = referenceValue.SegmentList;
+    PresentationState = referenceValue.PresentationState;
+    RealWorldValueMapping = referenceValue.RealWorldValueMapping;
     /* create copy of icon image (if any), first frame only */
     IconImage = (referenceValue.IconImage != NULL) ? referenceValue.IconImage->createDicomImage(0 /*fstart*/, 1 /*fcount*/) : NULL;
     return *this;
@@ -113,21 +126,23 @@ DSRImageReferenceValue &DSRImageReferenceValue::operator=(const DSRImageReferenc
 void DSRImageReferenceValue::clear()
 {
     DSRCompositeReferenceValue::clear();
-    PresentationState.clear();
     FrameList.clear();
+    SegmentList.clear();
+    PresentationState.clear();
+    RealWorldValueMapping.clear();
     deleteIconImage();
 }
 
 
 OFBool DSRImageReferenceValue::isValid() const
 {
-    return DSRCompositeReferenceValue::isValid() && checkPresentationState(PresentationState).good();
+    return DSRCompositeReferenceValue::isValid() && checkCurrentValue().good();
 }
 
 
 OFBool DSRImageReferenceValue::isShort(const size_t flags) const
 {
-    return FrameList.isEmpty() || !(flags & DSRTypes::HF_renderFullData);
+    return (FrameList.isEmpty() && SegmentList.isEmpty()) || !(flags & DSRTypes::HF_renderFullData);
 }
 
 
@@ -156,11 +171,16 @@ OFCondition DSRImageReferenceValue::print(STD_NAMESPACE ostream &stream,
     /* print SOP instance component (if desired) */
     if (flags & DSRTypes::PF_printSOPInstanceUID)
         stream << "\"" << SOPInstanceUID << "\"";
-    /* print frame list (if present) */
+    /* print list of frame or segment numbers (if present) */
     if (!FrameList.isEmpty())
     {
         stream << ",";
         FrameList.print(stream, flags);
+    }
+    else if (!SegmentList.isEmpty())
+    {
+        stream << ",";
+        SegmentList.print(stream, flags);
     }
     stream << ")";
     /* print information on presentation state (if present) */
@@ -202,20 +222,36 @@ OFCondition DSRImageReferenceValue::readXML(const DSRXMLDocument &doc,
     /* then read image related XML tags */
     if (result.good())
     {
-        /* frame list (optional) */
-        const DSRXMLCursor childCursor = doc.getNamedNode(cursor.getChild(), "frames", OFFalse /*required*/);
+        cursor.gotoChild();
+        /* either frame or segment list (conditional) */
+        DSRXMLCursor childCursor = doc.getNamedNode(cursor, "frames", OFFalse /*required*/);
         if (childCursor.valid())
         {
             OFString tmpString;
-            /* put element content to the channel list */
+            /* put element content to the frame list */
             result = FrameList.putString(doc.getStringFromNodeContent(childCursor, tmpString).c_str());
+        } else {
+            childCursor = doc.getNamedNode(cursor, "segments", OFFalse /*required*/);
+            if (childCursor.valid())
+            {
+                OFString tmpString;
+                /* put element content to the segment list */
+                result = SegmentList.putString(doc.getStringFromNodeContent(childCursor, tmpString).c_str());
+            }
         }
         if (result.good())
         {
-            /* presentation state (optional) */
-            cursor = doc.getNamedNode(cursor.getChild(), "pstate", OFFalse /*required*/);
-            if (cursor.getChild().valid())
-                result = PresentationState.readXML(doc, cursor);
+            /* presentation state object (optional) */
+            childCursor = doc.getNamedNode(cursor, "pstate", OFFalse /*required*/);
+            if (childCursor.valid())
+                result = PresentationState.readXML(doc, childCursor);
+        }
+        if (result.good())
+        {
+            /* real world value mapping object (optional) */
+            childCursor = doc.getNamedNode(cursor, "mapping", OFFalse /*required*/);
+            if (childCursor.valid())
+                result = RealWorldValueMapping.readXML(doc, childCursor);
         }
     }
     return result;
@@ -226,18 +262,34 @@ OFCondition DSRImageReferenceValue::writeXML(STD_NAMESPACE ostream &stream,
                                              const size_t flags) const
 {
     OFCondition result = DSRCompositeReferenceValue::writeXML(stream, flags);
-    if ((flags & DSRTypes::XF_writeEmptyTags) || !FrameList.isEmpty())
+    /* either frame or segment list (conditional) */
+    if (((flags & DSRTypes::XF_writeEmptyTags) && SegmentList.isEmpty()) || !FrameList.isEmpty())
     {
         stream << "<frames>";
         FrameList.print(stream);
         stream << "</frames>" << OFendl;
     }
+    else if ((flags & DSRTypes::XF_writeEmptyTags) || !SegmentList.isEmpty())
+    {
+        stream << "<segments>";
+        SegmentList.print(stream);
+        stream << "</segments>" << OFendl;
+    }
+    /* presentation state object (optional) */
     if ((flags & DSRTypes::XF_writeEmptyTags) || PresentationState.isValid())
     {
         stream << "<pstate>" << OFendl;
         if (PresentationState.isValid())
             PresentationState.writeXML(stream, flags);
         stream << "</pstate>" << OFendl;
+    }
+    /* real world value mapping object (optional) */
+    if ((flags & DSRTypes::XF_writeEmptyTags) || RealWorldValueMapping.isValid())
+    {
+        stream << "<mapping>" << OFendl;
+        if (RealWorldValueMapping.isValid())
+            RealWorldValueMapping.writeXML(stream, flags);
+        stream << "</mapping>" << OFendl;
     }
     return result;
 }
@@ -249,26 +301,28 @@ OFCondition DSRImageReferenceValue::readItem(DcmItem &dataset)
     deleteIconImage();
     /* read ReferencedSOPClassUID and ReferencedSOPInstanceUID */
     OFCondition result = DSRCompositeReferenceValue::readItem(dataset);
-    /* read ReferencedFrameNumber (conditional) */
-    if (result.good())
-        FrameList.read(dataset);
-    /* read ReferencedSOPSequence (Presentation State, optional) */
-    if (result.good())
-        PresentationState.readSequence(dataset, "3" /*type*/);
-    /* read IconImageSequence (optional) */
     if (result.good())
     {
-        DcmSequenceOfItems dseq(DCM_IconImageSequence);
+        /* read ReferencedFrameNumber (conditional) */
+        FrameList.read(dataset);
+        /* read ReferencedSegmentNumber (conditional) */
+        SegmentList.read(dataset);
+        /* read ReferencedSOPSequence (Presentation State, optional) */
+        PresentationState.readSequence(dataset, DCM_ReferencedSOPSequence, "3" /*type*/);
+        /* read ReferencedRealWorldValueMappingInstanceSequence (optional) */
+        RealWorldValueMapping.readSequence(dataset, DCM_ReferencedRealWorldValueMappingInstanceSequence, "3" /*type*/);
+        /* read IconImageSequence (optional) */
+        DcmSequenceOfItems *dseq = NULL;
         /* use local status variable since the sequence is optional */
-        const OFCondition seqStatus = DSRTypes::getElementFromDataset(dataset, dseq);
-        DSRTypes::checkElementValue(dseq, "1", "3", seqStatus, "IMAGE content item");
+        const OFCondition seqStatus = dataset.findAndGetSequence(DCM_IconImageSequence, dseq);
+        DSRTypes::checkElementValue(dseq, DCM_IconImageSequence, "1", "3", seqStatus, "IMAGE content item");
         if (seqStatus.good())
         {
             /* check for empty sequence (allowed!) */
-            if (!dseq.isEmpty())
+            if (!dseq->isEmpty())
             {
                 /* read first item */
-                DcmItem *ditem = dseq.getItem(0);
+                DcmItem *ditem = dseq->getItem(0);
                 if ((ditem != NULL) && !ditem->isEmpty())
                 {
                     /* try to load/process the icon image */
@@ -283,6 +337,8 @@ OFCondition DSRImageReferenceValue::readItem(DcmItem &dataset)
                     result = SR_EC_InvalidDocumentTree;
             }
         }
+        /* check data and report warnings if any */
+        checkListData(FrameList, SegmentList, OFTrue /*reportWarnings*/);
     }
     return result;
 }
@@ -292,17 +348,25 @@ OFCondition DSRImageReferenceValue::writeItem(DcmItem &dataset) const
 {
     /* write ReferencedSOPClassUID and ReferencedSOPInstanceUID */
     OFCondition result = DSRCompositeReferenceValue::writeItem(dataset);
-    /* write ReferencedFrameNumber (conditional) */
+    /* write ReferencedFrameNumber or ReferencedSegmentNumber (conditional) */
     if (result.good())
     {
         if (!FrameList.isEmpty())
             result = FrameList.write(dataset);
+        else if (!SegmentList.isEmpty())
+            result = SegmentList.write(dataset);
     }
     /* write ReferencedSOPSequence (Presentation State, optional) */
     if (result.good())
     {
         if (PresentationState.isValid())
-            result = PresentationState.writeSequence(dataset);
+            result = PresentationState.writeSequence(dataset, DCM_ReferencedSOPSequence);
+    }
+    /* write ReferencedRealWorldValueMappingInstanceSequence (optional) */
+    if (result.good())
+    {
+        if (RealWorldValueMapping.isValid())
+            result = RealWorldValueMapping.writeSequence(dataset, DCM_ReferencedRealWorldValueMappingInstanceSequence);
     }
     /* write IconImageSequence (optional) */
     if (result.good() && (IconImage != NULL))
@@ -312,15 +376,26 @@ OFCondition DSRImageReferenceValue::writeItem(DcmItem &dataset) const
         result = dataset.findOrCreateSequenceItem(DCM_IconImageSequence, ditem, 0 /*position*/);
         if (result.good())
         {
-            /* write icon image */
-            if (IconImage->writeFrameToDataset(*ditem))
+            /* monochrome images can be written directly */
+            if (IconImage->isMonochrome())
             {
-                /* delete unwanted element NumberOfFrames (0028,0008) */
-                ditem->findAndDeleteElement(DCM_NumberOfFrames);
-            } else
-                result = EC_CorruptedData;
+                /* write icon image to dataset */
+                if (IconImage->writeFrameToDataset(*ditem))
+                {
+                    /* delete unwanted element NumberOfFrames (0028,0008) */
+                    ditem->findAndDeleteElement(DCM_NumberOfFrames);
+                } else
+                    result = EC_CorruptedData;
+            } else {
+                OFString tmpString;
+                /* color images need to be converted to "PALETTE COLOR" */
+                result = DcmQuant::createPaletteColorImage(*IconImage, *ditem, OFTrue /*writeAsOW*/, OFFalse /*write16BitEntries*/,
+                    OFFalse /*floydSteinberg*/, 256 /*numberOfColors*/, tmpString /*description*/);
+            }
         }
     }
+    /* check data and report warnings if any */
+    checkListData(FrameList, SegmentList, OFTrue /*reportWarnings*/);
     return result;
 }
 
@@ -339,11 +414,16 @@ OFCondition DSRImageReferenceValue::renderHTML(STD_NAMESPACE ostream &docStream,
         docStream << "&amp;pstate=" << PresentationState.getSOPClassUID();
         docStream << "+" << PresentationState.getSOPInstanceUID();
     }
-    /* reference: frames */
+    /* reference: frames or segments */
     if (!FrameList.isEmpty())
     {
         docStream << "&amp;frames=";
         FrameList.print(docStream, 0 /*flags*/, '+');
+    }
+    else if (!SegmentList.isEmpty())
+    {
+        docStream << "&amp;segments=";
+        SegmentList.print(docStream, 0 /*flags*/, '+');
     }
     docStream << "\">";
     /* text: image */
@@ -353,7 +433,7 @@ OFCondition DSRImageReferenceValue::renderHTML(STD_NAMESPACE ostream &docStream,
     else
         docStream << "unknown";
     docStream << " image";
-    /* text: pstate */
+    /* text: presentation state */
     if (PresentationState.isValid())
         docStream << " with presentation state";
     docStream << "</a>";
@@ -509,8 +589,10 @@ OFCondition DSRImageReferenceValue::setValue(const DSRImageReferenceValue &refer
     if (result.good())
     {
         FrameList = referenceValue.FrameList;
-        /* ignore status (return value) since the presentation state is optional */
+        SegmentList = referenceValue.SegmentList;
+        /* ignore status (return value) since the references are optional */
         setPresentationState(referenceValue.PresentationState, check);
+        setRealWorldValueMapping(referenceValue.RealWorldValueMapping, check);
     }
     return result;
 }
@@ -532,11 +614,36 @@ OFCondition DSRImageReferenceValue::setPresentationState(const DSRCompositeRefer
 }
 
 
+OFCondition DSRImageReferenceValue::setRealWorldValueMapping(const DSRCompositeReferenceValue &mappingValue,
+                                                             const OFBool check)
+{
+    OFCondition result = EC_Normal;
+    /* check whether the passed value is valid */
+    if (check)
+        result = checkRealWorldValueMapping(mappingValue);
+    /* both UID values need to be empty or non-empty (optional) */
+    else if (mappingValue.getSOPClassUID().empty() != mappingValue.getSOPInstanceUID().empty())
+        result = SR_EC_InvalidValue;
+    if (result.good())
+        RealWorldValueMapping = mappingValue;
+    return result;
+}
+
+
 OFBool DSRImageReferenceValue::appliesToFrame(const Sint32 frameNumber) const
 {
     OFBool result = OFTrue;
     if (!FrameList.isEmpty())
         result = FrameList.isElement(frameNumber);
+    return result;
+}
+
+
+OFBool DSRImageReferenceValue::appliesToSegment(const Uint16 segmentNumber) const
+{
+    OFBool result = OFTrue;
+    if (!SegmentList.isEmpty())
+        result = SegmentList.isElement(segmentNumber);
     return result;
 }
 
@@ -555,12 +662,55 @@ OFCondition DSRImageReferenceValue::checkSOPClassUID(const OFString &sopClassUID
 OFCondition DSRImageReferenceValue::checkPresentationState(const DSRCompositeReferenceValue &referenceValue) const
 {
     OFCondition result = EC_Normal;
-    /* the reference to a presentation state is optional, so an empty value is also valid */
+    /* the reference to a presentation state object is optional, so an empty value is also valid */
     if (!referenceValue.isEmpty())
     {
-        result = referenceValue.checkCurrentValue();
-        if (result.good() && (DSRTypes::sopClassUIDToPresentationStateType(referenceValue.getSOPClassUID()) == DSRTypes::PT_invalid))
+        if (DSRTypes::sopClassUIDToPresentationStateType(referenceValue.getSOPClassUID()) == DSRTypes::PT_invalid)
             result = SR_EC_InvalidValue;
     }
+    return result;
+}
+
+
+OFCondition DSRImageReferenceValue::checkRealWorldValueMapping(const DSRCompositeReferenceValue &referenceValue) const
+{
+    OFCondition result = EC_Normal;
+    /* the reference to a real world value mapping object is optional, so an empty value is also valid */
+    if (!referenceValue.isEmpty())
+    {
+        if (referenceValue.getSOPClassUID() != UID_RealWorldValueMappingStorage)
+            result = SR_EC_InvalidValue;
+    }
+    return result;
+}
+
+
+// helper macro to avoid annoying check of boolean flag
+#define REPORT_WARNING(msg) { if (reportWarnings) DCMSR_WARN(msg); }
+
+OFCondition DSRImageReferenceValue::checkListData(const DSRImageFrameList &frameList,
+                                                  const DSRImageSegmentList &segmentList,
+                                                  const OFBool reportWarnings) const
+{
+    OFCondition result = EC_Normal;
+    if (!frameList.isEmpty() && !segmentList.isEmpty())
+    {
+        // this is just a warning since only one list will ever be written
+        REPORT_WARNING("Both ReferencedFrameNumber and ReferencedSegmentNumber present in IMAGE content item")
+    }
+    // tbd: check whether referenced image is a segmentation object? (see "type 1C" condition)
+    return result;
+}
+
+
+OFCondition DSRImageReferenceValue::checkCurrentValue() const
+{
+    OFCondition result = DSRCompositeReferenceValue::checkCurrentValue();
+    if (result.good())
+        result = checkPresentationState(PresentationState);
+    if (result.good())
+        result = checkRealWorldValueMapping(RealWorldValueMapping);
+    if (result.good())
+        result = checkListData(FrameList, SegmentList);
     return result;
 }

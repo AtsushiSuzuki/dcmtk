@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2000-2012, OFFIS e.V.
+ *  Copyright (C) 2000-2013, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -44,7 +44,7 @@ class DCMTK_DCMSR_EXPORT DSRCompositeReferenceValue
 
   public:
 
-    /** default contructor
+    /** default constructor
      */
     DSRCompositeReferenceValue();
 
@@ -96,7 +96,7 @@ class DCMTK_DCMSR_EXPORT DSRCompositeReferenceValue
 
     /** print reference value.
      *  The output of a typical composite reference value looks like this: (BasicTextSR,"1.2.3").
-     *  If the SOP class UID is unknown the UID is printed instead of the related name.
+     *  If the SOP class UID is unknown, the UID is printed instead of the related name.
      ** @param  stream  output stream to which the reference value should be printed
      *  @param  flags   flag used to customize the output (see DSRTypes::PF_xxx)
      ** @return status, EC_Normal if successful, an error code otherwise
@@ -125,19 +125,23 @@ class DCMTK_DCMSR_EXPORT DSRCompositeReferenceValue
      *  enabled, a warning message is printed if the sequence is absent or contains more than
      *  one item.
      ** @param  dataset  DICOM dataset from which the sequence should be read
+     *  @param  tagKey   DICOM tag specifying the attribute (= sequence) which should be read
      *  @param  type     value type of the sequence (valid value: "1", "2", something else)
      *                   This parameter is used for checking purpose, any difference is reported.
      ** @return status, EC_Normal if successful, an error code otherwise
      */
     virtual OFCondition readSequence(DcmItem &dataset,
+                                     const DcmTagKey &tagKey,
                                      const OFString &type);
 
     /** write referenced SOP sequence to dataset.
      *  If the value is empty an empty sequence (without any items) is written.
      ** @param  dataset  DICOM dataset to which the sequence should be written
+     *  @param  tagKey   DICOM tag specifying the attribute (= sequence) which should be written
      ** @return status, EC_Normal if successful, an error code otherwise
      */
-    virtual OFCondition writeSequence(DcmItem &dataset) const;
+    virtual OFCondition writeSequence(DcmItem &dataset,
+                                      const DcmTagKey &tagKey) const;
 
     /** render composite reference value in HTML/XHTML format
      ** @param  docStream    output stream to which the main HTML/XHTML document is written
@@ -231,12 +235,6 @@ class DCMTK_DCMSR_EXPORT DSRCompositeReferenceValue
     OFCondition setSOPInstanceUID(const OFString &sopInstanceUID,
                                   const OFBool check = OFTrue);
 
-    /** check the currently stored reference value for validity.
-     *  See below checkXXX() methods for details.
-     ** @return status, EC_Normal if current value is valid, an error code otherwise
-     */
-    OFCondition checkCurrentValue() const;
-
 
   protected:
 
@@ -277,6 +275,12 @@ class DCMTK_DCMSR_EXPORT DSRCompositeReferenceValue
      ** @return status, EC_Normal if value is valid, an error code otherwise
      */
     virtual OFCondition checkSOPInstanceUID(const OFString &sopInstanceUID) const;
+
+    /** check the currently stored reference value for validity.
+     *  See above checkXXX() methods for details.
+     ** @return status, EC_Normal if current value is valid, an error code otherwise
+     */
+    OFCondition checkCurrentValue() const;
 
     /// reference SOP class UID (VR=UI, type 1)
     OFString SOPClassUID;

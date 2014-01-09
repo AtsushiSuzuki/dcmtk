@@ -736,116 +736,108 @@ OFCondition DSRDocumentTreeNode::readContentSequence(DcmItem &dataset,
                                                      const size_t flags)
 {
     OFCondition result = EC_Normal;
-    DcmStack stack;
+    DcmSequenceOfItems *dseq = NULL;
     /* read ContentSequence (might be absent or empty) */
-    if (dataset.search(DCM_ContentSequence, stack, ESM_fromHere, OFFalse).good())
+    if (dataset.findAndGetSequence(DCM_ContentSequence, dseq).good())
     {
-        DcmSequenceOfItems *dseq = OFstatic_cast(DcmSequenceOfItems *, stack.top());
-        if (dseq != NULL)
+        OFString tmpString;
+        E_ValueType valueType = VT_invalid;
+        E_RelationshipType relationshipType = RT_invalid;
+        /* important: NULL indicates first child node */
+        DSRDocumentTreeNode *node = NULL;
+        /* for all items in the sequence */
+        unsigned long i = 0;
+        DcmObject *dobj = NULL;
+        while (((dobj = dseq->nextInContainer(dobj)) != NULL) && result.good())
         {
-            OFString tmpString;
-            E_ValueType valueType = VT_invalid;
-            E_RelationshipType relationshipType = RT_invalid;
-            /* important: NULL indicates first child node */
-            DSRDocumentTreeNode *node = NULL;
-            DcmItem *ditem = NULL;
-            const unsigned long count = dseq->card();
-            /* for all items in the sequence */
-            unsigned long i = 0;
-            while ((i < count) && result.good())
+            DcmItem *ditem = OFstatic_cast(DcmItem *, dobj);
+            DSRDocumentTreeNode *newNode = NULL;
+            /* create current location string */
+            char buffer[20];
+            OFString location = posString;
+            if (!location.empty())
+                location += ".";
+            location += numberToString(OFstatic_cast(size_t, i + 1), buffer);
+            if (flags & RF_showCurrentlyProcessedItem)
+                DCMSR_INFO("Processing content item " << location);
+            /* read RelationshipType */
+            result = getAndCheckStringValueFromDataset(*ditem, DCM_RelationshipType, tmpString, "1", "1", "content item");
+            if (result.good() || (flags & RF_acceptUnknownRelationshipType))
             {
-                ditem = dseq->getItem(i);
-                if (ditem != NULL)
+                relationshipType = definedTermToRelationshipType(tmpString);
+                /* check relationship type */
+                if (relationshipType == RT_invalid)
                 {
-                    DSRDocumentTreeNode *newNode = NULL;
-                    /* create current location string */
-                    char buffer[20];
-                    OFString location = posString;
-                    if (!location.empty())
-                        location += ".";
-                    location += numberToString(OFstatic_cast(size_t, i + 1), buffer);
-                    if (flags & RF_showCurrentlyProcessedItem)
-                        DCMSR_INFO("Processing content item " << location);
-                    /* read RelationshipType */
-                    result = getAndCheckStringValueFromDataset(*ditem, DCM_RelationshipType, tmpString, "1", "1", "content item");
-                    if (result.good() || (flags & RF_acceptUnknownRelationshipType))
+                    printUnknownValueWarningMessage("RelationshipType", tmpString.c_str());
+                    if (flags & RF_acceptUnknownRelationshipType)
+                        relationshipType = RT_unknown;
+                }
+                /* check for by-reference relationship */
+                DcmUnsignedLong referencedContentItemIdentifier(DCM_ReferencedContentItemIdentifier);
+                if (getAndCheckElementFromDataset(*ditem, referencedContentItemIdentifier, "1-n", "1C", "content item").good())
+                {
+                    /* create new node (by-reference, no constraint checker required) */
+                    result = createAndAppendNewNode(node, relationshipType, VT_byReference);
+                    /* read ReferencedContentItemIdentifier (again) */
+                    if (result.good())
                     {
-                        relationshipType = definedTermToRelationshipType(tmpString);
-                        /* check relationship type */
-                        if (relationshipType == RT_invalid)
+                        newNode = node;
+                        result = node->readContentItem(*ditem);
+                    }
+                } else {
+                    /* read ValueType (from DocumentContentMacro) - required to create new node */
+                    result = getAndCheckStringValueFromDataset(*ditem, DCM_ValueType, tmpString, "1", "1", "content item");
+                    if (result.good())
+                    {
+                        /* read by-value relationship */
+                        valueType = definedTermToValueType(tmpString);
+                        /* check value type */
+                        if (valueType != VT_invalid)
                         {
-                            printUnknownValueWarningMessage("RelationshipType", tmpString.c_str());
-                            if (flags & RF_acceptUnknownRelationshipType)
-                                relationshipType = RT_unknown;
-                        }
-                        /* check for by-reference relationship */
-                        DcmUnsignedLong referencedContentItemIdentifier(DCM_ReferencedContentItemIdentifier);
-                        if (getAndCheckElementFromDataset(*ditem, referencedContentItemIdentifier, "1-n", "1C", "content item").good())
-                        {
-                            /* create new node (by-reference, no constraint checker required) */
-                            result = createAndAppendNewNode(node, relationshipType, VT_byReference);
-                            /* read ReferencedContentItemIdentifier (again) */
+                            /* create new node (by-value) */
+                            result = createAndAppendNewNode(node, relationshipType, valueType, (flags & RF_ignoreRelationshipConstraints) ? NULL : constraintChecker);
+                            /* read RelationshipMacro */
                             if (result.good())
                             {
                                 newNode = node;
-                                result = node->readContentItem(*ditem);
+                                result = node->readDocumentRelationshipMacro(*ditem, constraintChecker, location, flags);
+                                /* read DocumentContentMacro */
+                                if (result.good())
+                                    result = node->readDocumentContentMacro(*ditem, location.c_str(), flags);
+                            } else {
+                                /* create new node failed */
+
+                                /* determine document type */
+                                const E_DocumentType documentType = (constraintChecker != NULL) ? constraintChecker->getDocumentType() : DT_invalid;
+                                DCMSR_ERROR("Cannot add \"" << relationshipTypeToReadableName(relationshipType) << " "
+                                    << valueTypeToDefinedTerm(valueType /*target item*/) << "\" to "
+                                    << valueTypeToDefinedTerm(ValueType /*source item*/) << " in "
+                                    << documentTypeToReadableName(documentType));
                             }
                         } else {
-                            /* read ValueType (from DocumentContentMacro) - required to create new node */
-                            result = getAndCheckStringValueFromDataset(*ditem, DCM_ValueType, tmpString, "1", "1", "content item");
-                            if (result.good())
-                            {
-                                /* read by-value relationship */
-                                valueType = definedTermToValueType(tmpString);
-                                /* check value type */
-                                if (valueType != VT_invalid)
-                                {
-                                    /* create new node (by-value) */
-                                    result = createAndAppendNewNode(node, relationshipType, valueType, (flags & RF_ignoreRelationshipConstraints) ? NULL : constraintChecker);
-                                    /* read RelationshipMacro */
-                                    if (result.good())
-                                    {
-                                        newNode = node;
-                                        result = node->readDocumentRelationshipMacro(*ditem, constraintChecker, location, flags);
-                                        /* read DocumentContentMacro */
-                                        if (result.good())
-                                            result = node->readDocumentContentMacro(*ditem, location.c_str(), flags);
-                                    } else {
-                                        /* create new node failed */
-
-                                        /* determine document type */
-                                        const E_DocumentType documentType = (constraintChecker != NULL) ? constraintChecker->getDocumentType() : DT_invalid;
-                                        DCMSR_ERROR("Cannot add \"" << relationshipTypeToReadableName(relationshipType) << " "
-                                            << valueTypeToDefinedTerm(valueType /*target item*/) << "\" to "
-                                            << valueTypeToDefinedTerm(ValueType /*source item*/) << " in "
-                                            << documentTypeToReadableName(documentType));
-                                    }
-                                } else {
-                                    /* unknown/unsupported value type */
-                                    printUnknownValueWarningMessage("ValueType", tmpString.c_str());
-                                    result = SR_EC_UnknownValueType;
-                                }
-                            }
+                            /* unknown/unsupported value type */
+                            printUnknownValueWarningMessage("ValueType", tmpString.c_str());
+                            result = SR_EC_UnknownValueType;
                         }
                     }
-                    /* check for any errors */
-                    if (result.bad())
-                    {
-                        printContentItemErrorMessage("Reading", result, newNode, location.c_str());
-                        /* print current data set (item) that caused the error */
-                        DCMSR_DEBUG(OFString(31, '-') << " DICOM DATA SET " << OFString(31, '-') << OFendl
-                            << DcmObject::PrintHelper(*ditem, DCMTypes::PF_convertToOctalNumbers, 1) << OFString(78, '-'));
-                    }
-                } else
-                    result = SR_EC_InvalidDocumentTree;
-                i++;
+                }
             }
-            /* skipping complete sub-tree if flag is set */
-            if (result.bad() && (flags & RF_skipInvalidContentItems))
+            /* check for any errors */
+            if (result.bad())
             {
-                printInvalidContentItemMessage("Skipping", node);
-                result = EC_Normal;
+                printContentItemErrorMessage("Reading", result, newNode, location.c_str());
+                /* print current data set (item) that caused the error */
+                DCMSR_DEBUG(OFString(31, '-') << " DICOM DATA SET " << OFString(31, '-') << OFendl
+                    << DcmObject::PrintHelper(*ditem, DCMTypes::PF_convertToOctalNumbers, 1) << OFString(78, '-'));
             }
+            /* increment the counter (needed for generating the location string) */
+            i++;
+        }
+        /* skipping complete sub-tree if flag is set */
+        if (result.bad() && (flags & RF_skipInvalidContentItems))
+        {
+            printInvalidContentItemMessage("Skipping", node);
+            result = EC_Normal;
         }
     }
     return result;

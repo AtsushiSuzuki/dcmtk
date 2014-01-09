@@ -20,8 +20,12 @@ config/autom4te.cache/
 *.tmp
 *.log
 
+# Patch files
+*.patch
+
 # HTML documentation
 doxygen/htmldocs/
+doxygen/dcmtk.tag
 
 # Built binary files
 */tests/tests

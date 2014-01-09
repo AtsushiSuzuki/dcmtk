@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 1994-2012, OFFIS e.V.
+ *  Copyright (C) 1994-2013, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -32,6 +32,11 @@
 #define INCLUDE_CSTRING
 #define INCLUDE_NEW
 #include "dcmtk/ofstd/ofstdinc.h"
+
+
+// global flags
+
+OFGlobal<OFBool> dcmEnableVRCheckerForStringValues(OFTrue);
 
 
 // global function to get a particular component of a DICOM string
@@ -173,7 +178,7 @@ Uint32 DcmByteString::getRealLength()
         /* strips non-significant trailing spaces (padding) and determines 'realLength' */
         makeMachineByteString();
     }
-    /* strig length of the internal representation */
+    /* string length of the internal representation */
     return realLength;
 }
 
@@ -729,7 +734,8 @@ OFCondition DcmByteString::checkStringValue(const OFString &value,
                                             const OFString &vm,
                                             const OFString &vr,
                                             const int vrID,
-                                            const size_t maxLen)
+                                            const size_t maxLen,
+                                            const OFString &charset)
 {
     OFCondition result = EC_Normal;
     const size_t valLen = value.length();
@@ -741,9 +747,16 @@ OFCondition DcmByteString::checkStringValue(const OFString &value,
             /* check value length (if a maximum is specified) */
             if ((maxLen > 0) && (value.length() > maxLen))
                 result = EC_MaximumLengthViolated;
-            /* check value representation */
-            else if (DcmElement::scanValue(value, vr) != vrID)
-                result = EC_ValueRepresentationViolated;
+            else if (dcmEnableVRCheckerForStringValues.get())
+            {
+                /* currently, the VR checker only supports ASCII and Latin-1 */
+                if (charset.empty() || (charset == "ISO_IR 6") || (charset == "ISO_IR 100"))
+                {
+                    /* check value representation */
+                    if (DcmElement::scanValue(value, vr) != vrID)
+                        result = EC_ValueRepresentationViolated;
+                }
+            }
         } else {
             size_t posStart = 0;
             unsigned long vmNum = 0;
@@ -759,12 +772,18 @@ OFCondition DcmByteString::checkStringValue(const OFString &value,
                 {
                     result = EC_MaximumLengthViolated;
                     break;
-                } else {
-                    /* check value representation */
-                    if (DcmElement::scanValue(value, vr, posStart, length) != vrID)
+                }
+                else if (dcmEnableVRCheckerForStringValues.get())
+                {
+                    /* currently, the VR checker only supports ASCII and Latin-1 */
+                    if (charset.empty() || (charset == "ISO_IR 6") || (charset == "ISO_IR 100"))
                     {
-                        result = EC_ValueRepresentationViolated;
-                        break;
+                        /* check value representation */
+                        if (DcmElement::scanValue(value, vr, posStart, length) != vrID)
+                        {
+                            result = EC_ValueRepresentationViolated;
+                            break;
+                        }
                     }
                 }
                 posStart = (posEnd == OFString_npos) ? posEnd : posEnd + 1;

@@ -1,6 +1,734 @@
 
 Changes between releases are documented here.
 
+**** Changes from 2013.12.20 (riesmeier)
+
+- Fixed comments and documented default values.
+  Affects: dcmnet/include/dcmtk/dcmnet/scu.h
+
+- Again, fixed comments to be consistent with code.
+  Affects: dcmnet/tests/tpool.cc
+
+- Cleaned up source code in various aspects:
+  Made evaluation of command line parameters and options more consistent with
+  the other command line tools, fixed inconsistencies regarding log output,
+  used appropriate DcmSCU methods when closing an association, etc.
+  Affects: dcmnet/apps/getscu.cc
+
+- Removed check on number of command line arguments:
+  Since the tool has at least one mandatory command line parameter, there is no
+  need to check OFCommandLine::getArgCount() explicitly.
+  Affects: dcmnet/apps/dcmrecv.cc
+           dcmnet/apps/dcmsend.cc
+
+**** Changes from 2013.12.11 (riesmeier)
+
+- Replaced deprecated DcmSCU::closeAssociation():
+  Replaced call to DcmSCU::closeAssociation(DCMSCU_RELEASE_ASSOCIATION) by
+  DcmSCU::releaseAssociation() since the former is deprecated.
+  Affects: dcmnet/tests/tpool.cc
+
+- Fixed typos, comments and coding style.
+  Affects: dcmnet/tests/tpool.cc
+
+**** Changes from 2013.12.10 (riesmeier)
+
+- Second try to fix the issue with "ofstd_markup_6":
+  The error in test "ofstd_markup_6" still occurred on various systems.
+  Thanks to Mathieu Malaterre <malat@debian.org> for pointing this out.
+  Affects: ofstd/tests/tmarkup.cc
+
+**** Changes from 2013.12.10 (onken)
+
+- Fixed some inconsistencies in documentation.
+  Affects: INSTALL
+
+**** Changes from 2013.12.05 (onken)
+
+- Fixed typo.
+  Affects: dcmtls/include/dcmtk/dcmtls/tlslayer.h
+
+- Documentation for CMAKE_BUILD_TYPE default value.
+  Thanks to Mathieu Malaterre <malat@debian.org> for pointing to the fact that
+  having no default value in some situations is important and Jean-Christophe
+  Fillion-Robin <jchris.fillionr@kitware.com> for giving a solution.
+  Affects: CMake/dcmtkPrepare.cmake
+           INSTALL
+
+**** Changes from 2013.11.29 (riesmeier)
+
+- Completed support for <InlineBinary> XML element:
+  Completed support for the <InlineBinary> XML element used by the Native DICOM
+  Model format. Now, also data elements with a VR of OD and OF can be encoded
+  as base64. Closes DCMTK Feature #549.
+  Affects: dcmdata/docs/dcm2xml.man
+           dcmdata/libsrc/Makefile.dep
+           dcmdata/libsrc/dcvrod.cc
+           dcmdata/libsrc/dcvrof.cc
+
+**** Changes from 2013.11.28 (riesmeier)
+
+- Do not check valueLoaded() for Native DICOM Model:
+  Do not check whether a value has actually been loaded when writing an element
+  value to XML output in the Native DICOM Model. This is because this concept
+  is only known to the DCMTK-specific output format.
+  Affects: dcmdata/libsrc/dcelem.cc
+
+- Fixed output of AT values in Native DICOM Model:
+  Fixed wrong output format for Attribute Tag (AT) values in the Native DICOM
+  Model. Supplement 166 (QIDO-RS) clarifies that the format is "GGGGEEEE", and
+  not "(gggg,eeee)" as it was before (which is DCMTK's default string output
+  format for AT values). Closes DCMTK Bug #551.
+  Affects: dcmdata/include/dcmtk/dcmdata/dcvrat.h
+           dcmdata/libsrc/dcvrat.cc
+
+- Fixed various typos in man pages.
+  Thanks to Mathieu Malaterre <malat@debian.org> for the original report.
+  Affects: dcmdata/docs/dcm2pdf.man
+           dcmdata/docs/dcm2xml.man
+           dcmdata/docs/dcmconv.man
+           dcmdata/docs/dcmcrle.man
+           dcmdata/docs/dcmdrle.man
+           dcmdata/docs/dcmdump.man
+           dcmdata/docs/dcmftest.man
+           dcmdata/docs/dcmgpdir.man
+           dcmdata/docs/dcmodify.man
+           dcmdata/docs/dump2dcm.man
+           dcmdata/docs/img2dcm.man
+           dcmdata/docs/pdf2dcm.man
+           dcmdata/docs/xml2dcm.man
+           dcmimage/docs/dcm2pnm.man
+           dcmimage/docs/dcmquant.man
+           dcmimage/docs/dcmscale.man
+           dcmimgle/docs/dcmdspfn.man
+           dcmimgle/docs/dcod2lum.man
+           dcmimgle/docs/dconvlum.man
+           dcmjpeg/docs/dcmcjpeg.man
+           dcmjpeg/docs/dcmdjpeg.man
+           dcmjpeg/docs/dcmj2pnm.man
+           dcmjpeg/docs/dcmmkdir.man
+           dcmjpls/docs/dcmcjpls.man
+           dcmjpls/docs/dcmdjpls.man
+           dcmjpls/docs/dcml2pnm.man
+           dcmnet/docs/dcmrecv.man
+           dcmnet/docs/dcmsend.man
+           dcmnet/docs/echoscu.man
+           dcmnet/docs/findscu.man
+           dcmnet/docs/getscu.man
+           dcmnet/docs/movescu.man
+           dcmnet/docs/storescp.man
+           dcmnet/docs/storescu.man
+           dcmnet/docs/termscu.man
+           dcmpstat/docs/dcmmkcrv.man
+           dcmpstat/docs/dcmmklut.man
+           dcmpstat/docs/dcmp2pgm.man
+           dcmpstat/docs/dcmprscp.man
+           dcmpstat/docs/dcmprscu.man
+           dcmpstat/docs/dcmpschk.man
+           dcmpstat/docs/dcmpsmk.man
+           dcmpstat/docs/dcmpsprt.man
+           dcmpstat/docs/dcmpsrcv.man
+           dcmpstat/docs/dcmpssnd.man
+           dcmqrdb/docs/dcmqridx.man
+           dcmqrdb/docs/dcmqrscp.man
+           dcmqrdb/docs/dcmqrti.man
+           dcmrt/docs/drtdump.man
+           dcmsign/docs/dcmsign.man
+           dcmsr/docs/dsr2html.man
+           dcmsr/docs/dsr2xml.man
+           dcmsr/docs/dsrdump.man
+           dcmsr/docs/xml2dsr.man
+           dcmwlm/docs/wlmscpfs.man
+
+**** Changes from 2013.11.26 (riesmeier)
+
+- Fixed issue with test "ofstd_markup_6" (Win32):
+  Fixed issue with test "ofstd_markup_6" not running successfully on Windows
+  systems (due to an incorrect length of the input string value).
+  Thanks to forum user "ghleclerc" for the report.
+  Affects: ofstd/tests/tmarkup.cc
+
+- Fixed minor Doxygen-related issue in documentation:
+  Doxygen requires three slashes "///" for documenting entities, e.g. members
+  of an enumeration type. One slash was missing for CS_UTF8 in E_CharacterSet.
+  Also fixed various typos in comments.
+  Affects: dcmsr/include/dcmtk/dcmsr/dsrtypes.h
+
+**** Changes from 2013.11.25 (riesmeier)
+
+- Fixed name of PN component in Native DICOM Model:
+  Fixed name of first PersonName (PN) component in Native DICOM Model.
+  According to Supplement 166 (QIDO-RS) the XML element name is "Alphabetic"
+  (and not "SingleByte" as it was before).
+  Affects: dcmdata/libsrc/dcvrpn.cc
+
+**** Changes from 2013.11.21 (riesmeier)
+
+- Fixed minor Doxygen-related issue in documentation:
+  Doxygen, the tool that is used for generating the HTML documentation from
+  source code, requires that a "." is escaped under certain conditions, e.g.
+  if this character does not define the end of a sentence as used for short
+  class descriptions.
+  Affects: ofstd/include/dcmtk/ofstd/offile.h
+
+**** Changes from 2013.11.19 (riesmeier)
+
+- Added new option for disabling the VR checker:
+  Added new command line option that allows for disabling the VR checker by
+  setting the recently introduced global "dcmdata" flag accordingly.
+  Affects: dcmsr/apps/dsr2html.cc
+           dcmsr/apps/dsr2xml.cc
+           dcmsr/apps/dsrdump.cc
+           dcmsr/docs/dsr2html.man
+           dcmsr/docs/dsr2xml.man
+           dcmsr/docs/dsrdump.man
+
+- Added global flag for disabling the VR checker:
+  Added global flag that allows for disabling the VR checker used by the
+  various checkStringValue() methods. Since this checker is currently limited
+  to ASCII and Latin-1, and the detection of the character set might fail for
+  incorrectly encoded DICOM datasets, this check can be disabled globally.
+  Affects: dcmdata/include/dcmtk/dcmdata/dcbytstr.h
+           dcmdata/include/dcmtk/dcmdata/dcvrpn.h
+           dcmdata/libsrc/dcbytstr.cc
+           dcmdata/libsrc/dcvrda.cc
+           dcmdata/libsrc/dcvrdt.cc
+           dcmdata/libsrc/dcvrpn.cc
+           dcmdata/libsrc/dcvrtm.cc
+
+**** Changes from 2013.11.18 (riesmeier)
+
+- Removed redundant and outdated Word document:
+  Removed redundant and outdated Word document "wwwapp.doc", which used to
+  contain the same information as "wwwapp.txt". Closes DCMTK Feature #556.
+  Removed: dcmwlm/docs/wwwapp.doc
+
+- Added missing break statements to switch cases:
+  Added missing break statements to switch cases, which previously resulted in
+  a wrong return value of the CheckMatchingKey() method. Thanks to Peter Klotz
+  <Peter.Klotz@ith-icoserve.com> for the bug report and patch.
+  Affects: dcmwlm/libsrc/wlds.cc
+
+**** Changes from 2013.11.17 (schlachter)
+
+- Don't set the defines for thread local storage support incorrectly:
+  If DCMTK_LOG4CPLUS_HAVE_TLS_SUPPORT is defined, the code uses it to mark
+  variables as thread-local and expects the compiler to implement this.
+  Otherwise, calls into the thread library are used. So defining it to an
+  empty value makes oflog thread-unsafe. Thanks to Peter Klotz
+  <Peter.Klotz@ith-icoserve.com> for the report and a test case.
+  Affects: oflog/include/dcmtk/oflog/config/defines.h
+
+**** Changes from 2013.11.15 (riesmeier)
+
+- Avoid CMake warning on non-installable files.
+  Affects: dcmdata/libsrc/CMakeLists.txt
+
+- Fixed build issue with shared libraries (Win32):
+  Fixed link errors on Windows systems when building with BUILD_SHARED_LIB set
+  to "ON". This caused the executables "mkdictbi" and "mkdeftag" to fail.
+  Thanks to forum user "lars_matthaeus" for the original report.
+  Affects: dcmdata/libsrc/CMakeLists.txt
+
+- Removed trailing white spaces from man pages files.
+  Affects: doxygen/manpages/man1/*
+
+**** Changes from 2013.11.14 (thiel)
+
+- Updated man pages for new development snapshot.
+  Affects: doxygen/manpages/man1/*
+
+**** Changes from 2013.11.13 (onken)
+
+- Avoid second OpenSSL initialization in constructor:
+  OpenSSL's one-time initialization is performed in the TLS layer
+  constructor. In multi-threaded environments this leads to multiple
+  initialization calls if  more than one association is used at the
+  same time. Thus a parameter was added in order to disable the
+  initialization code if desired. Thanks to Peter Klotz
+  <Peter.Klotz@ith-icoserve.com> for the report and suggested patch.
+  Affects: dcmtls/include/dcmtk/dcmtls/tlslayer.h
+           dcmtls/libsrc/tlslayer.cc
+
+**** Changes from 2013.11.13 (riesmeier)
+
+- Fixed issue with color icon images:
+  According to the DICOM standard, color icon images should always be written
+  with a value of "PALETTE COLOR" for Photometric Interpretation. Before this
+  fix, also other color models like "RGB" were created for the optional icon
+  image of an IMAGE content item. Closes DCMTK Bug #577.
+  Affects: dcmsr/include/dcmtk/dcmsr/dsrimgvl.h
+           dcmsr/libsrc/Makefile.dep
+           dcmsr/libsrc/dsrimgvl.cc
+
+- Added comment on wrong color model for icon images:
+  Added comment on relevant API methods that for color images, the photometric
+  interpretation "RGB" is used, which is not allowed according to the DICOM
+  standard (see PS 3.3 Section F.7). This will be fixed in the future by using
+  "PALETTE COLOR" instead. Noted as DCMTK Bug #577.
+  Affects: dcmsr/include/dcmtk/dcmsr/dsrimgvl.h
+           dcmsr/libsrc/dsrimgvl.cc
+
+- Fixed doubled output of XML start tag for VR=OD.
+  Affects: dcmdata/libsrc/dcvrod.cc
+
+**** Changes from 2013.11.12 (onken)
+
+- Fixed doubled tag output in XML output of VR OF:
+  Fixed doubled tag output in XML output of VR OF. Thanks to Peter Klotz
+  <Peter.Klotz@ith-icoserve.com> for the report and suggested patch.
+  Affects: dcmdata/libsrc/dcvrof.cc
+
+**** Changes from 2013.11.11 (onken)
+
+- Make sure CMAKE_BUILD_TYPE has a default value:
+  CMAKE_CONFIGURATION_TYPES is set for generators that support multiple
+  configuration types (and have per-configuration subdirectories like
+  Debug and Release). It is empty for other generators and for those
+  generators the build type is controlled at CMake time by
+  CMAKE_BUILD_TYPE. Patch ensures that CMAKE-BUILD-TYPE has "Release" as
+  a default value. Thanks to Kent Williams <norman-k-williams@uiowa.edu>
+  and Jean-Christophe Fillion-Robin <jchris.fillionr@kitware.com> for
+  the patch.
+  Affects: CMake/dcmtkPrepare.cmake
+
+- Described movescu storage SCP timeout problem:
+  In case movescu acts as a storage SCP, it hangs forever if storage client
+  never closes the underlying association.
+  Affects: dcmnet/docs/movescu.man
+
+- Fixed comments.
+  Affects: dcmwlm/libsrc/wlfsim.cc
+
+**** Changes from 2013.11.07 (riesmeier)
+
+- Fixed bug that could cause a crash:
+  Fixed bug that could cause a crash when processing an image with an empty
+  value for Image Type. This could cause a NULL pointer to be dereferenced.
+  Thanks to Tiago D'Agostini <tiago.dagostini@pixeon.com> for the report.
+  Affects: dcmimage/apps/dcmscale.cc
+
+**** Changes from 2013.11.04 (riesmeier)
+
+- Added Corneal Topography Map Storage SOP Class:
+  Added Corneal Topography Map Storage SOP Class (introduced only recently with
+  Supplement 168) to the list of accepted SOP classes, since there still was
+  one entry left.
+  Affects: dcmnet/etc/storescp.cfg
+
+**** Changes from 2013.10.31 (onken)
+
+- Corrected misleading transfer syntax error message:
+  When sending C-ECHO failed because no valid transfer syntax for the
+  Verification SOP Class could be found, then a misleading error message
+  was triggered complaining about missing Verification SOP Class support
+  for Little Endian Implicit. Now the message does only tell that no
+  valid presentation context for C-ECHO could be found.
+  Thanks to Mathieu Malaterre <mathieu.malaterre@gmail.com> for the
+  original report.
+  Affects: dcmnet/libsrc/scu.cc
+
+- Support explicit item length denoting too many bytes:
+  Added flag that allows to ignore explicit item lengths that denote more
+  bytes than the contained elements actually contribute.
+  Affects: dcmdata/include/dcmtk/dcmdata/dcerror.h
+           dcmdata/libsrc/dcerror.cc
+           dcmdata/libsrc/dcitem.cc
+           dcmdata/tests/tests.cc
+           dcmdata/tests/tparser.cc
+
+**** Changes from 2013.10.30 (riesmeier)
+
+- Fixed small issue reported by CMake 2.8.12:
+  A trailing "/" had to be removed in order to keep CMake 2.8.12 quiet.
+  Affects: CMake/3rdparty.cmake
+
+- Updated CMake version:
+  Updated information on latest CMake version that has been tested to "2.8.12".
+  Affects: CMake/dcmtkPrepare.cmake
+
+**** Changes from 2013.10.29 (riesmeier)
+
+- Added support for Referenced Segment Number:
+  Added support for the optional list of referenced segment numbers to IMAGE
+  content items. Partially closes DCMTK Feature #149.
+  Added:   dcmsr/include/dcmtk/dcmsr/dsrimgse.h
+           dcmsr/libsrc/dsrimgse.cc
+  Affects: dcmsr/apps/Makefile.dep
+           dcmsr/data/dsr2xml.xsd
+           dcmsr/include/dcmtk/dcmsr/dsrimgfr.h
+           dcmsr/include/dcmtk/dcmsr/dsrimgvl.h
+           dcmsr/libsrc/CMakeLists.txt
+           dcmsr/libsrc/Makefile.dep
+           dcmsr/libsrc/Makefile.in
+           dcmsr/libsrc/dsrimgfr.cc
+           dcmsr/libsrc/dsrimgvl.cc
+           dcmsr/tests/Makefile.dep
+
+- Check return value of write() methods:
+  Check return value when writing data from one of the three lists, i.e.
+  SamplePositionList, TimeOffsetList or DateTimeList.
+  Affects: dcmsr/libsrc/dsrtcovl.cc
+
+- Slightly enhanced comments.
+  Affects: dcmsr/include/dcmtk/dcmsr/dsrtcovl.h
+           dcmsr/include/dcmtk/dcmsr/dsrwavvl.h
+           dcmsr/libsrc/dsrwavch.cc
+
+- Moved checkCurrentValue() to "protected" section:
+  Moved method checkCurrentValue() to the "protected" section of the class in
+  order to be consistent with other similar classes.
+  Affects: dcmsr/include/dcmtk/dcmsr/dsrcomvl.h
+
+**** Changes from 2013.10.28 (riesmeier)
+
+- Added comment on getFrameList() method:
+  Added clarifying note on the getFrameList() method (based on the DICOM
+  standard text, Table C.18.4-1 in PS 3.3-2011).
+  Affects: dcmsr/include/dcmtk/dcmsr/dsrimgvl.h
+
+- Added support for Real World Value Mapping objects:
+  Added support for referencing objects of the Real World Value Mapping Storage
+  SOP class from IMAGE content items. Partially closes DCMTK Feature #149.
+  Affects: dcmsr/data/dsr2xml.xsd
+           dcmsr/include/dcmtk/dcmsr/dsrcomvl.h
+           dcmsr/include/dcmtk/dcmsr/dsrimgtn.h
+           dcmsr/include/dcmtk/dcmsr/dsrimgvl.h
+           dcmsr/libsrc/dsrcomtn.cc
+           dcmsr/libsrc/dsrcomvl.cc
+           dcmsr/libsrc/dsrimgtn.cc
+           dcmsr/libsrc/dsrimgvl.cc
+           dcmsr/libsrc/dsrwavtn.cc
+
+**** Changes from 2013.10.25 (riesmeier)
+
+- Fixed small typos in comments.
+  Affects: dcmsr/include/dcmtk/dcmsr/dsrcodvl.h
+           dcmsr/include/dcmtk/dcmsr/dsrcomvl.h
+           dcmsr/include/dcmtk/dcmsr/dsrimgvl.h
+           dcmsr/include/dcmtk/dcmsr/dsrsc3vl.h
+           dcmsr/include/dcmtk/dcmsr/dsrscovl.h
+           dcmsr/include/dcmtk/dcmsr/dsrstrvl.h
+           dcmsr/include/dcmtk/dcmsr/dsrtcovl.h
+           dcmsr/include/dcmtk/dcmsr/dsrwavvl.h
+
+- Added comments on missing features:
+  Added comments that the conditional/optional attributes Referenced Segment
+  Number (0062,000B) and Referenced Real World Value Mapping Instance Sequence
+  (0008,114B) are not yet supported by this class. Such still-missing features
+  are marked with "tbd" (to be done) throughout the "dcmsr" module.
+  Affects: dcmsr/include/dcmtk/dcmsr/dsrimgvl.h
+           dcmsr/libsrc/dsrimgvl.cc
+
+- Use helper method for deleting data elements:
+  Use the helper method DcmItem::findAndDeleteElement() for deleting certain
+  data elements in all items of a particular sequence.
+  Affects: dcmsr/libsrc/dsrtypes.cc
+
+- Iterate more efficiently over sequence items:
+  Changed the way sequence items are iterated. Now, the nextInContainer()
+  method of the DcmSequenceOfItems class is used instead of getItem(). This
+  approach is much more efficient when a sequence contains a huge number of
+  items, because of the current implementation of the getItem() method.
+  Affects: dcmsr/libsrc/dsrcsidl.cc
+           dcmsr/libsrc/dsrdoctn.cc
+           dcmsr/libsrc/dsrrefin.cc
+           dcmsr/libsrc/dsrsoprf.cc
+           dcmsr/libsrc/dsrtypes.cc
+
+**** Changes from 2013.10.24 (riesmeier)
+
+- Adapted test cases for markup conversion:
+  Added a new test case and adapted an existing one for the new behavior of
+  the "convert to markup" functions with regards to embedded NULL bytes,
+  Affects: ofstd/tests/tests.cc
+           ofstd/tests/tmarkup.cc
+
+- Never output NULL bytes to markup string/stream:
+  Made sure that a NULL byte is never output to HTML/XHTML/XML mnenonic string
+  or stream. Only if non-ASCII characters are converted to their numeric value
+  (&#nnn;), they will be "visible".
+  Affects: ofstd/libsrc/ofstd.cc
+
+**** Changes from 2013.10.23 (riesmeier)
+
+- Added support for new UID from Supplement 168:
+  Added support for new SOP Class UID from Supplement 168 (Corneal Topography
+  Map Storage SOP Class).
+  Affects: dcmdata/include/dcmtk/dcmdata/dcuid.h
+           dcmdata/libsrc/dcuid.cc
+           dcmnet/docs/storescp.man
+           dcmnet/etc/storescp.cfg
+           dcmnet/etc/storescu.cfg
+           dcmqrdb/docs/dcmqrscp.man
+
+- Added support for Supplement 168 to data dictionary:
+  Added support for final text version of Supplement 168 (Corneal Topography
+  Map Storage SOP Class) to the data dictionary.
+  Affects: dcmdata/data/dicom.dic
+           dcmdata/include/dcmtk/dcmdata/dcdeftag.h
+           dcmdata/libsrc/dcdictzz.cc
+
+- Added support for CP-1268 to data dictionary.
+  Affects: dcmdata/data/dicom.dic
+           dcmdata/include/dcmtk/dcmdata/dcdeftag.h
+           dcmdata/libsrc/dcdictzz.cc
+
+**** Changes from 2013.10.21 (riesmeier)
+
+- Removed redundant API comment.
+  Affects: dcmdata/include/dcmtk/dcmdata/dctagkey.h
+
+- Fixed outdated comment on 1st PN component group:
+  Fixed outdated comment on first component group of a Person Name (PN) value.
+  According to CP-964, the first component group defines an alphabetic (and not
+  a single-byte) representation of the person name.
+  Affects: dcmdata/include/dcmtk/dcmdata/dcvrpn.h
+
+- Do not output group length in Native DICOM Model:
+  Do not output group length elements (gggg,0000) in Native DICOM Model format
+  (as per PS 3.19 section A.1.1, introduced with Supplement 166).
+  Affects: dcmdata/libsrc/dcelem.cc
+
+**** Changes from 2013.10.17 (riesmeier)
+
+- Fixed wrong content type of XML element in DTD:
+  According to the W3C XML specification, "CDATA" is not allowed in the content
+  model for elements. So, for the "pixel-item" element it has been replaced by
+  "#PCDATA" (which is allowed). Thanks to forum user "wrenashe" for the report.
+  Affects: dcmdata/data/dcm2xml.dtd
+
+**** Changes from 2013.10.14 (riesmeier)
+
+- Fixed source code formatting and various comments.
+  Affects: dcmdata/libsrc/dcmetinf.cc
+
+- Fixed timeout issue in handleAssociation():
+  Fixed issue with timeout parameter not being passed to DIMSE_receiveCommand()
+  in DcmSCP::handleAssociation() method. This prevented the non-blocking mode
+  from working correctly.
+  Thanks to forum user "wrenashe" for the report and suggested fix.
+  Affects: dcmnet/libsrc/scp.cc
+
+**** Changes from 2013.10.12 (riesmeier)
+
+- Updated URL of DCMTK's home page.
+  Affects: doxygen/footer.html
+
+- Removed outdated custom CSS file.
+  Affects: doxygen/htmldocs.cfg
+  Removed: doxygen/htmldocs.css
+
+- Updated Doxygen configuration files:
+  Updated Doxygen configuration files to a more recent version (1.8.1.2).
+  Affects: doxygen/htmldocs.cfg
+           doxygen/manpages.cfg
+
+- Minor changes to comments.
+  Affects: ofstd/include/dcmtk/ofstd/ofstd.h
+           ofstd/libsrc/ofstd.cc
+
+**** Changes from 2013.10.11 (riesmeier)
+
+- Minor fixes in comments.
+  Affects: dcmdata/include/dcmtk/dcmdata/dcchrstr.h
+
+- Fixed memory leak in log4cplus code:
+  Fixed small memory leak (4 bytes) in log4cplus code, which was reported by
+  valgrind as "still reachable" after program exit.
+  Also see http://sourceforge.net/p/log4cplus/bugs/278/
+  Affects: oflog/libsrc/globinit.cc
+
+**** Changes from 2013.10.11 (onken)
+
+- Replaced tabs with spaces.
+  Affects: dcmwlm/libsrc/wlds.cc
+
+- Worklist SCP support for Responsible Person/Role:
+  Added support for attributes Responsible Person and Responsible Person Role
+  as Matching and Return Keys to worklist server.
+  Affects: dcmwlm/docs/wlmscpfs.man
+           dcmwlm/include/dcmtk/dcmwlm/wltypdef.h
+           dcmwlm/libsrc/wlds.cc
+           dcmwlm/libsrc/wlfsim.cc
+
+**** Changes from 2013.10.10 (riesmeier)
+
+- Updated comment on current character set issue.
+  Affects: dcmsr/libsrc/dsrcodvl.cc
+           dcmsr/libsrc/dsrpnmtn.cc
+           dcmsr/libsrc/dsrtextn.cc
+
+- Use helper function findAndGetSequence():
+  Use helper function DcmItem::findAndGetSequence() instead of the low-level
+  search() method, which requires a DcmStack instance.
+  Affects: dcmsr/libsrc/dsrdoctn.cc
+
+- Report warning on unsupported character sets:
+  Report a warning message on SpecificCharacterSet values that are not (yet)
+  supported by the VR checker in the dcmdata module (i.e. all but ASCII and
+  ISO Latin-1).
+  Affects: dcmsr/libsrc/dsrdoc.cc
+
+- Enhanced implementation of checkCode() method:
+  Made sure that the checkCode() method does not reject valid code values that
+  use extended characters that are not yet supported by dcmdata's VR checker
+  (i.e. all but ASCII and ISO Latin-1). Partially closes DCMTK Bug #547.
+  Affects: dcmsr/libsrc/dsrcodvl.cc
+
+- Avoid unnecessary copies of sequence elements:
+  By referencing the sequence elements instead of copying, it is also possible
+  to access the SpecificCharacterSet element of the surrounding dataset/item,
+  which is needed for the VR checker. Partially closes DCMTK Bug #547.
+  Affects: dcmsr/libsrc/dsrcodvl.cc
+           dcmsr/libsrc/dsrcomvl.cc
+           dcmsr/libsrc/dsrcsidl.cc
+           dcmsr/libsrc/dsrimgfr.cc
+           dcmsr/libsrc/dsrimgvl.cc
+           dcmsr/libsrc/dsrnumvl.cc
+           dcmsr/libsrc/dsrsoprf.cc
+
+- Added new variant of checkElementValue():
+  This new variant gets a pointer to a DICOM element (and not a reference).
+  In addition, the getAndCheckXXXFromDataset() methods now make sure that no
+  element copy is created _before_ the element is checked. This is because
+  otherwise there would be no access to the SpecificCharacterSet element of
+  the surrounding dataset/item, which is needed for the VR checker.
+  Affects: dcmsr/include/dcmtk/dcmsr/dsrtypes.h
+           dcmsr/libsrc/dsrtypes.cc
+
+- Added 'charset' parameter to checkStringValue():
+  Added optional character set parameter to static function checkStringValue()
+  in order to make sure that only ASCII and Latin-1 strings are checked for
+  their conformance with the VR definition (this is a current limitation of the
+  underlying VR checker). Also the checkValue() method now uses the value of
+  the SpecificCharacterSet element of the surrounding dataset/item.
+  Affects: dcmdata/include/dcmtk/dcmdata/dcbytstr.h
+           dcmdata/include/dcmtk/dcmdata/dcvrlo.h
+           dcmdata/include/dcmtk/dcmdata/dcvrlt.h
+           dcmdata/include/dcmtk/dcmdata/dcvrpn.h
+           dcmdata/include/dcmtk/dcmdata/dcvrsh.h
+           dcmdata/include/dcmtk/dcmdata/dcvrst.h
+           dcmdata/include/dcmtk/dcmdata/dcvrut.h
+           dcmdata/libsrc/dcbytstr.cc
+           dcmdata/libsrc/dcvrlo.cc
+           dcmdata/libsrc/dcvrlt.cc
+           dcmdata/libsrc/dcvrpn.cc
+           dcmdata/libsrc/dcvrsh.cc
+           dcmdata/libsrc/dcvrst.cc
+           dcmdata/libsrc/dcvrut.cc
+
+- Added method to determine SpecificCharacterSet:
+  Added method to class DcmCharString that allows for determining the value of
+  the SpecificCharacterSet element of the surrounding dataset/item.
+  Closes DCMTK Feature #555.
+  Affects: dcmdata/include/dcmtk/dcmdata/dcchrstr.h
+           dcmdata/include/dcmtk/dcmdata/dcdatset.h
+           dcmdata/include/dcmtk/dcmdata/dcdirrec.h
+           dcmdata/include/dcmtk/dcmdata/dcitem.h
+           dcmdata/libsrc/Makefile.dep
+           dcmdata/libsrc/dcchrstr.cc
+
+- Fixed various typos in comments.
+  Affects: dcmdata/libsrc/dcelem.cc
+           dcmdata/libsrc/dcitem.cc
+
+**** Changes from 2013.10.09 (riesmeier)
+
+- Fixed various typos.
+  Affects: dcmnet/include/dcmtk/dcmnet/scpcfg.h
+           dcmnet/include/dcmtk/dcmnet/scpthrd.h
+
+**** Changes from 2013.10.08 (riesmeier)
+
+- Fixed typos.
+  Affects: ofstd/include/dcmtk/ofstd/ofuuid.h
+           ofstd/libsrc/ofuuid.cc
+
+- Updated automake script to version 1.14:
+  Updated script that creates filesystem directories to the most recent version
+  of automake, even though only minor changes were made.
+  Affects: config/mkinstalldirs
+
+- Also updated autoconf support files:
+  After updating the configure script to autoconf 2.69, now also the support
+  files that are shipped with the autoconf package have been updated.
+  Affects: config/config.guess
+           config/config.sub
+           config/install-sh
+
+**** Changes from 2013.10.07 (riesmeier)
+
+- Added definition of DCMTK_PACKAGE_URL:
+  Added definition of DCMTK_PACKAGE_URL in order to be consistent with the
+  GNU autoconf (aka configure) system. However, this setting is currently
+  unused and, therefore, uncommented/disabled.
+  Affects: CMake/dcmtkPrepare.cmake
+
+**** Changes from 2013.10.04 (riesmeier)
+
+- Updated to autoconf 2.69.
+  Affects: config/configure
+           config/confmod
+
+- Updated our email address for bug reports.
+  Affects: CMake/dcmtkPrepare.cmake
+           README
+           config/configure.in
+           dcmwlm/docs/wwwapp.txt
+           doxygen/htmldocs.dox
+
+**** Changes from 2013.10.02 (riesmeier)
+
+- Made use of new global flags for VR generation:
+  The new global flags for enabling/disabling the support of OF and OD as a
+  valid VR are now used for the "post-1993 VR" command line options.
+  Affects: dcmdata/apps/dcmconv.cc
+           dcmdata/apps/dcmcrle.cc
+           dcmdata/apps/dcmdrle.cc
+           dcmdata/apps/dcmgpdir.cc
+           dcmdata/apps/dump2dcm.cc
+           dcmdata/apps/mdfconen.cc
+           dcmdata/apps/pdf2dcm.cc
+           dcmdata/apps/xml2dcm.cc
+           dcmimage/apps/dcmquant.cc
+           dcmimage/apps/dcmscale.cc
+           dcmjpeg/apps/dcmcjpeg.cc
+           dcmjpeg/apps/dcmdjpeg.cc
+           dcmjpls/apps/dcmcjpls.cc
+           dcmjpls/apps/dcmdjpls.cc
+           dcmnet/apps/findscu.cc
+           dcmnet/apps/movescu.cc
+           dcmnet/apps/storescp.cc
+           dcmnet/apps/storescu.cc
+           dcmpstat/apps/dcmprscp.cc
+           dcmpstat/apps/dcmprscu.cc
+           dcmpstat/apps/dcmpsrcv.cc
+           dcmpstat/apps/dcmpssnd.cc
+           dcmqrdb/apps/dcmqrscp.cc
+           dcmqrdb/apps/dcmqrti.cc
+           dcmsr/apps/xml2dsr.cc
+           dcmwlm/apps/wlcefs.cc
+
+- Added two new global flags for VR generation:
+  Added global flags for enabling/disabling the support of OF and OD as a valid
+  VR. When disabling the support for these post-1993 VRs, OB is used instead.
+  Affects: dcmdata/include/dcmtk/dcmdata/dcvr.h
+           dcmdata/libsrc/dcvr.c
+
+**** Changes from 2013.10.01 (riesmeier)
+
+- Added trace log message on VR replacement:
+  Output message to trace logger when a post-1993 value representation like UT
+  or UN is replaced by OB because support for these "new" VRs is disabled.
+  Affects: dcmdata/libsrc/dcvr.cc
+
+- Fixed various coding style issues.
+  Affects: dcmdata/libsrc/dcvr.cc
+
+- Removed superfluous footnote symbol "(*)".
+  Affects: dcmwlm/docs/wlmscpfs.man
+
 **** Changes from 2013.09.28 (riesmeier)
 
 - Output currently processed line of input file:
