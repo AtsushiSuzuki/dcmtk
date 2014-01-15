@@ -4,7 +4,7 @@
 **
 **   User: joergr
 **   Host: thinkpad
-**   Date: 2013-10-23 14:59:20
+**   Date: 2014-01-14 12:13:30
 **   Prog: /home/joergr/Source/dcmtk-full/public/dcmdata/libsrc/mkdeftag
 **
 **   From: ../data/dicom.dic
@@ -17,12 +17,12 @@
 
 #include "dcmtk/dcmdata/dctagkey.h"
 
-#define DCM_DICT_DEFTAG_BUILD_DATE "2013-10-23 14:59:20"
+#define DCM_DICT_DEFTAG_BUILD_DATE "2014-01-14 12:13:30"
 
 
 /*
 ** Fixed Tags in ascending (gggg,eeee) order.
-** Number of entries: 3678
+** Number of entries: 3702
 ** Tags with a repeating component (repeating tags) are listed later.
 */
 #define DCM_CommandGroupLength                   DcmTagKey(0x0000, 0x0000)
@@ -79,6 +79,8 @@
 #define DCM_ImplementationClassUID               DcmTagKey(0x0002, 0x0012)
 #define DCM_ImplementationVersionName            DcmTagKey(0x0002, 0x0013)
 #define DCM_SourceApplicationEntityTitle         DcmTagKey(0x0002, 0x0016)
+#define DCM_SendingApplicationEntityTitle        DcmTagKey(0x0002, 0x0017)
+#define DCM_ReceivingApplicationEntityTitle      DcmTagKey(0x0002, 0x0018)
 #define DCM_PrivateInformationCreatorUID         DcmTagKey(0x0002, 0x0100)
 #define DCM_PrivateInformation                   DcmTagKey(0x0002, 0x0102)
 #define DCM_FileSetID                            DcmTagKey(0x0004, 0x1130)
@@ -995,6 +997,8 @@
 #define DCM_ASLSlabSequence                      DcmTagKey(0x0018, 0x9260)
 #define DCM_ChemicalShiftMinimumIntegrationLimitInppm DcmTagKey(0x0018, 0x9295)
 #define DCM_ChemicalShiftMaximumIntegrationLimitInppm DcmTagKey(0x0018, 0x9296)
+#define DCM_WaterReferenceAcquisition            DcmTagKey(0x0018, 0x9297)
+#define DCM_EchoPeakPosition                     DcmTagKey(0x0018, 0x9298)
 #define DCM_CTAcquisitionTypeSequence            DcmTagKey(0x0018, 0x9301)
 #define DCM_AcquisitionType                      DcmTagKey(0x0018, 0x9302)
 #define DCM_TubeAngle                            DcmTagKey(0x0018, 0x9303)
@@ -1114,6 +1118,25 @@
 #define DCM_XRay3DReconstructionSequence         DcmTagKey(0x0018, 0x9530)
 #define DCM_ReconstructionDescription            DcmTagKey(0x0018, 0x9531)
 #define DCM_PerProjectionAcquisitionSequence     DcmTagKey(0x0018, 0x9538)
+#define DCM_DetectorPositionSequence             DcmTagKey(0x0018, 0x9541)
+#define DCM_XRayAcquisitionDoseSequence          DcmTagKey(0x0018, 0x9542)
+#define DCM_XRaySourceIsocenterPrimaryAngle      DcmTagKey(0x0018, 0x9543)
+#define DCM_XRaySourceIsocenterSecondaryAngle    DcmTagKey(0x0018, 0x9544)
+#define DCM_BreastSupportIsocenterPrimaryAngle   DcmTagKey(0x0018, 0x9545)
+#define DCM_BreastSupportIsocenterSecondaryAngle DcmTagKey(0x0018, 0x9546)
+#define DCM_BreastSupportXPositionToIsocenter    DcmTagKey(0x0018, 0x9547)
+#define DCM_BreastSupportYPositionToIsocenter    DcmTagKey(0x0018, 0x9548)
+#define DCM_BreastSupportZPositionToIsocenter    DcmTagKey(0x0018, 0x9549)
+#define DCM_DetectorIsocenterPrimaryAngle        DcmTagKey(0x0018, 0x9550)
+#define DCM_DetectorIsocenterSecondaryAngle      DcmTagKey(0x0018, 0x9551)
+#define DCM_DetectorXPositionToIsocenter         DcmTagKey(0x0018, 0x9552)
+#define DCM_DetectorYPositionToIsocenter         DcmTagKey(0x0018, 0x9553)
+#define DCM_DetectorZPositionToIsocenter         DcmTagKey(0x0018, 0x9554)
+#define DCM_XRayGridSequence                     DcmTagKey(0x0018, 0x9555)
+#define DCM_XRayFilterSequence                   DcmTagKey(0x0018, 0x9556)
+#define DCM_DetectorActiveAreaTLHCPosition       DcmTagKey(0x0018, 0x9557)
+#define DCM_DetectorActiveAreaOrientation        DcmTagKey(0x0018, 0x9558)
+#define DCM_PositionerPrimaryAngleDirection      DcmTagKey(0x0018, 0x9559)
 #define DCM_DiffusionBMatrixSequence             DcmTagKey(0x0018, 0x9601)
 #define DCM_DiffusionBValueXX                    DcmTagKey(0x0018, 0x9602)
 #define DCM_DiffusionBValueXY                    DcmTagKey(0x0018, 0x9603)
@@ -3100,6 +3123,7 @@
 #define DCM_ROIElementalCompositionSequence      DcmTagKey(0x3006, 0x00b6)
 #define DCM_ROIElementalCompositionAtomicNumber  DcmTagKey(0x3006, 0x00b7)
 #define DCM_ROIElementalCompositionAtomicMassFraction DcmTagKey(0x3006, 0x00b8)
+#define DCM_AdditionalRTROIIdentificationCodeSequence DcmTagKey(0x3006, 0x00b9)
 #define DCM_RETIRED_FrameOfReferenceRelationshipSequence DcmTagKey(0x3006, 0x00c0)
 #define DCM_RETIRED_RelatedFrameOfReferenceUID   DcmTagKey(0x3006, 0x00c2)
 #define DCM_RETIRED_FrameOfReferenceTransformationType DcmTagKey(0x3006, 0x00c4)
